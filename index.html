@@ -1856,10 +1856,10 @@ revealElements.forEach(el => observer.observe(el));
     });
     if (allMessages.length === 0) return;
     await supabaseClient.from('chat_history').upsert({
-      user_id: user.id,
-      messages: allMessages,
-      created_at: new Date().toISOString()
-    });
+    user_id: user.id,
+    messages: allMessages,
+    created_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
   }
 
   async function loadChatHistory() {
