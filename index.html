@@ -1195,7 +1195,7 @@
 </div>
 
 <!-- ══ AUTH MODAL ══ -->
-<div class="modal-overlay" id="modal-overlay">
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target === this) closeModal()">
   <div class="modal">
     <button class="modal-close" onclick="closeModal()">✕</button>
     <h2>Welcome to MathDesk</h2>
@@ -1207,28 +1207,28 @@
     <div id="tab-login">
       <div class="form-group">
         <label>Email</label>
-        <input type="email" placeholder="you@example.com">
+        <input type="email" placeholder="you@example.com" id="login-email">
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" placeholder="••••••••">
+        <input type="password" placeholder="••••••••" id="login-password">
       </div>
-      <button class="modal-submit">Log In</button>
+      <button class="modal-submit" onclick="logIn()">Log In</button>
     </div>
     <div id="tab-signup" style="display:none">
       <div class="form-group">
         <label>Name</label>
-        <input type="text" placeholder="Your name">
+        <input type="text" placeholder="Your name" id="signup-name">
       </div>
       <div class="form-group">
         <label>Email</label>
-        <input type="email" placeholder="you@example.com">
+        <input type="email" placeholder="you@example.com" id="signup-email">
       </div>
       <div class="form-group">
         <label>Password</label>
-        <input type="password" placeholder="Create a password">
+        <input type="password" placeholder="Create a password" id="signup-password">
       </div>
-      <button class="modal-submit">Create Account</button>
+      <button class="modal-submit" onclick="signUp()">Create Account</button>
     </div>
     <div class="modal-note">MathDesk is free. No credit card. No subscription. ❤️</div>
   </div>
@@ -1252,6 +1252,8 @@
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 // ── TOOLS DATA ──
 const tools = [
@@ -1271,6 +1273,21 @@ const tools = [
   { name:"Matrix Calculator", logo:"https://logo.clearbit.com/matrixcalc.org", emoji:"🔲", cat:"solver", free:true, desc:"Comprehensive matrix operations: inverse, determinant, eigenvalues, row reduction, and more.", url:"https://matrixcalc.org" },
   { name:"Mathplanet", logo:"https://logo.clearbit.com/mathplanet.com", emoji:"🌍", cat:"reference", free:true, desc:"Free, textbook-style explanations of pre-algebra through pre-calculus, organized by course and chapter.", url:"https://mathplanet.com" },
 ];
+
+// ── AUTH MODAL ──
+function switchTab(btn, tab) {
+  document.querySelectorAll('.modal-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-login').style.display = (tab === 'login') ? 'block' : 'none';
+  document.getElementById('tab-signup').style.display = (tab === 'signup') ? 'block' : 'none';
+}
+
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
 
 function renderTools(filter='all') {
   const grid = document.getElementById('tools-grid');
@@ -1464,6 +1481,7 @@ async function sendMessage() {
       });
       removeTyping();
       addMessage('ai', formatReply(reply));
+      saveChatHistory();   // ✅ ADD THIS LINE
     } catch(e) {
       removeTyping();
       addMessage('ai', `⚠️ ${e.message || 'Could not reach the AI.'}`);
@@ -1482,11 +1500,13 @@ async function sendMessage() {
     const reply = await callN8N(text, currentMode);
     removeTyping();
     addMessage('ai', formatReply(reply));
+    saveChatHistory();   // ✅ ADD THIS LINE
   } catch(e) {
     removeTyping();
     addMessage('ai', `⚠️ ${e.message || 'Could not reach the AI.'}`);
     console.error('n8n error:', e);
   }
+
 }
 
 function quickPrompt(text) {
@@ -1764,6 +1784,114 @@ const observer = new IntersectionObserver((entries) => {
 }, { threshold: 0.15 });
 
 revealElements.forEach(el => observer.observe(el));
+
+  // ── SUPABASE INIT ──
+  const SUPABASE_URL = 'https://hmkngkzmoxltozwnwxfl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhta25na3ptb3hsdG96d253eGZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NzA4NTAsImV4cCI6MjA5MzE0Njg1MH0.UW7Odi9iO6fL9U15O-zUP-MLVjbhbv9T9Y5Gdr-6xAQ';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ── AUTH ──
+  async function signUp() {
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value.trim();
+    if (!email || !password || !name) { alert('All fields required.'); return; }
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: { data: { name } }
+    });
+    if (error) alert(error.message);
+    else {
+      alert('Signed up successfully! Check your email for confirmation if enabled.');
+      closeModal();
+      updateAuthUI();
+    }
+  }
+
+  async function logIn() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+    if (!email || !password) { alert('Email and password required.'); return; }
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    else {
+      closeModal();
+      updateAuthUI();
+    }
+  }
+
+  async function logOut() {
+    await supabaseClient.auth.signOut();
+    updateAuthUI();
+  }
+
+  async function updateAuthUI() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const loginBtn = document.querySelector('.nav-btn');
+    const chatSidebar = document.querySelector('.chat-sidebar');
+    if (user) {
+      loginBtn.textContent = `👋 ${user.user_metadata?.name || user.email} (Logout)`;
+      loginBtn.onclick = logOut;
+      if (chatSidebar) chatSidebar.style.display = 'flex';
+      loadChatHistory();
+    } else {
+      loginBtn.textContent = 'Login / Sign Up';
+      loginBtn.onclick = openModal;
+      if (chatSidebar) chatSidebar.style.display = 'none';   // hide history when not logged in
+      clearChatHistoryList();
+    }
+  }
+
+  // Chat history persistence (requires chat_history table in Supabase)
+  async function saveChatHistory() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+    const msgsContainer = document.getElementById('chat-messages');
+    const allMessages = [];
+    msgsContainer.querySelectorAll('.message').forEach(msg => {
+      const role = msg.classList.contains('user') ? 'user' : 'ai';
+      const bubble = msg.querySelector('.msg-bubble');
+      if (bubble) allMessages.push({ role, content: bubble.innerHTML });
+    });
+    if (allMessages.length === 0) return;
+    await supabaseClient.from('chat_history').upsert({
+      user_id: user.id,
+      messages: allMessages,
+      created_at: new Date().toISOString()
+    });
+  }
+
+  async function loadChatHistory() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+    const { data } = await supabaseClient
+      .from('chat_history')
+      .select('messages')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    if (!data || !data.messages) return;
+    document.getElementById('chat-messages').innerHTML = '';
+    data.messages.forEach(msg => addMessage(msg.role, msg.content));
+  }
+
+  function clearChatHistoryList() {
+    // You can clear the static example items here if desired
+    const historyDiv = document.querySelector('.sidebar-history');
+    if (historyDiv) {
+      historyDiv.innerHTML = '<h4>Recent Chats</h4><p style="font-size:0.8rem;color:var(--gray-600);padding:10px;">Log in to see your saved chats.</p>';
+    }
+  }
+
+  // listen to auth state changes
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    updateAuthUI();
+  });
+
+  // initial UI update
+  updateAuthUI();
 
 // ── AUTH MODAL ── … (unchanged) …
 // ── SCROLL REVEAL ── … (unchanged) …
