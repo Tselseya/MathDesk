@@ -360,9 +360,12 @@
     font-size: 1rem; flex-shrink: 0;
   }
   .msg-avatar.ai {
-    background: linear-gradient(135deg, var(--blue-mid), var(--blue-sky));
-    color: white; font-weight: 800; font-size: 0.85rem;
-  }
+    background-color: var(--blue-light);
+    background-size: cover;
+    background-position: center;
+    color: transparent;
+    font-size: 0.85rem;
+}
   .msg-avatar.user {
     background: var(--gray-200); font-size: 1.1rem;
   }
@@ -1124,7 +1127,7 @@
 
         <div class="chat-messages" id="chat-messages">
           <div class="message ai">
-            <div class="msg-avatar ai">M</div>
+            <div class="msg-avatar ai" style="background-image:url('Desky.png');background-size:cover;background-position:center;">&nbsp;</div>
             <div>
               <div class="msg-bubble">
                 👋 Hi! I'm MathDesk AI. I can help you in three ways:<br><br>
@@ -1434,19 +1437,19 @@ function addMessage(role, html) {
   const div = document.createElement('div');
   div.className = `message ${role}`;
   if (role === 'ai') {
-    div.innerHTML = `<div class="msg-avatar ai">M</div><div><div class="msg-bubble">${html}</div></div>`;
+    div.innerHTML = `<div class="msg-avatar ai" style="background-image:url('Desky.png');background-size:cover;background-position:center;">&nbsp;</div><div><div class="msg-bubble">${html}</div></div>`;
   } else {
     div.innerHTML = `<div class="msg-avatar user">👤</div><div class="msg-bubble">${html}</div>`;
   }
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
-
+  
 function addTyping() {
   const msgs = document.getElementById('chat-messages');
   const div = document.createElement('div');
   div.className = 'message ai'; div.id = 'typing-msg';
-  div.innerHTML = `<div class="msg-avatar ai">M</div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  div.innerHTML = `<div class="msg-avatar ai" style="background-image:url('Desky.png');background-size:cover;background-position:center;">&nbsp;</div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
   msgs.appendChild(div);
   msgs.scrollTop = msgs.scrollHeight;
 }
