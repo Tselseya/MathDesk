@@ -1,0 +1,2819 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MathDesk: Learn Math Better, One Step at a Time</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Mono:wght@400;500&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+<link rel="shortcut icon" href="/favicon.ico" />
+<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<meta name="apple-mobile-web-app-title" content="MathDesk" />
+<link rel="manifest" href="/site.webmanifest" />
+<meta name="description" content="Got a math problem? Desky's got you. Step-by-step solutions, concept explanations, and practice problems — all in one place.">
+<meta property="og:title" content="MathDesk: Learn Math Better, One Step at a Time">
+<meta property="og:description" content="Got a math problem? Desky's got you. Step-by-step solutions, concept explanations, and practice problems — all in one place.">
+<meta property="og:image" content="https://raw.githubusercontent.com/Tselseya/MathDesk/main/og-image.png">
+<meta property="og:url" content="https://mathdesk.page.gd/">
+<meta property="og:type" content="website">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="MathDesk: Learn Math Better, One Step at a Time">
+<meta name="twitter:description" content="Got a math problem? Desky's got you. Step-by-step solutions, concept explanations, and practice problems — all in one place.">
+<meta name="twitter:image" content="https://raw.githubusercontent.com/Tselseya/MathDesk/main/og-image.png">
+
+<style>
+  :root {
+    --blue-deep: #0a1f6e;
+    --blue-mid: #1a56db;
+    --blue-bright: #2f80ed;
+    --blue-sky: #56adf5;
+    --blue-light: #dbeafe;
+    --accent: #00d4ff;
+    --white: #ffffff;
+    --gray-100: #f0f4ff;
+    --gray-200: #e0e8ff;
+    --gray-600: #4b5563;
+    --gray-800: #1e293b;
+    --success: #10b981;
+    --radius: 16px;
+    --radius-sm: 10px;
+    --shadow: 0 8px 32px rgba(26,86,219,0.13);
+    --shadow-lg: 0 20px 60px rgba(26,86,219,0.18);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--gray-100);
+    color: var(--gray-800);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+    height: 64px;
+    background: rgba(255,255,255,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--gray-200);
+    box-shadow: 0 2px 16px rgba(26,86,219,0.07);
+  }
+
+  .nav-logo {
+    display: flex; align-items: center; gap: 10px;
+    font-family: 'Sora', sans-serif; font-weight: 800; font-size: 1.3rem;
+    color: var(--blue-deep); text-decoration: none;
+  }
+  .nav-logo span { color: var(--blue-bright); }
+
+  .logo-icon {
+    width: 44px; height: 28px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-icon svg { width: 100%; height: 100%; }
+
+  .nav-links {
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .nav-link {
+    padding: 8px 16px; border-radius: 8px;
+    font-weight: 600; font-size: 0.9rem; color: var(--gray-600);
+    cursor: pointer; transition: all 0.2s; border: none; background: none;
+    font-family: 'Nunito', sans-serif;
+  }
+  .nav-link:hover, .nav-link.active { background: var(--blue-light); color: var(--blue-mid); }
+
+  .nav-btn {
+    padding: 8px 20px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    color: white; font-weight: 700; font-size: 0.9rem;
+    border: none; cursor: pointer; transition: all 0.2s;
+    font-family: 'Nunito', sans-serif;
+  }
+  .nav-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26,86,219,0.35); }
+
+  /* ── MAIN LAYOUT ── */
+  .app {
+    padding-top: 64px;
+    min-height: 100vh;
+    display: flex; flex-direction: column;
+  }
+
+  /* ── PAGE SECTIONS ── */
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── HERO ── */
+  .hero {
+    min-height: calc(100vh - 64px);
+    background: linear-gradient(135deg, #0a1f6e 0%, #1a56db 50%, #2f80ed 100%);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    text-align: center; padding: 60px 24px;
+    position: relative; overflow: hidden;
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 70% 20%, rgba(0,212,255,0.15) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 80%, rgba(86,173,245,0.12) 0%, transparent 50%);
+  }
+
+  .hero-math-bg {
+    position: absolute; inset: 0; overflow: hidden; pointer-events: none;
+    opacity: 0.07;
+  }
+  .math-symbol {
+    position: absolute; font-family: 'DM Mono', monospace;
+    color: white; font-size: clamp(1.2rem, 3vw, 2.5rem);
+    animation: float 8s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%,100% { transform: translateY(0) rotate(0deg); }
+    50% { transform: translateY(-20px) rotate(5deg); }
+  }
+
+  .hero-content { position: relative; z-index: 1; max-width: 700px; }
+
+  .hero-badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 100px; padding: 6px 16px; margin-bottom: 28px;
+    font-size: 0.85rem; color: rgba(255,255,255,0.9); font-weight: 600;
+  }
+
+  .hero h1 {
+    font-family: 'Sora', sans-serif; font-weight: 800;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    color: white; line-height: 1.1; margin-bottom: 20px;
+  }
+  .hero h1 span { color: var(--accent); }
+
+  .hero p {
+    font-size: 1.15rem; color: rgba(255,255,255,0.8);
+    line-height: 1.7; margin-bottom: 40px; max-width: 560px; margin-left: auto; margin-right: auto;
+  }
+
+  .hero-ctas {
+    display: flex; gap: 14px; justify-content: center; flex-wrap: wrap;
+  }
+
+  .btn-primary {
+    padding: 14px 32px; border-radius: 12px;
+    background: white; color: var(--blue-mid);
+    font-weight: 800; font-size: 1rem; border: none; cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    transition: all 0.2s; box-shadow: 0 4px 24px rgba(0,0,0,0.15);
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+
+  .btn-outline {
+    padding: 14px 32px; border-radius: 12px;
+    background: rgba(255,255,255,0.1); color: white;
+    font-weight: 700; font-size: 1rem;
+    border: 1.5px solid rgba(255,255,255,0.3); cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    transition: all 0.2s; backdrop-filter: blur(8px);
+  }
+  .btn-outline:hover { background: rgba(255,255,255,0.18); border-color: rgba(255,255,255,0.5); }
+
+  .hero-stats {
+    display: flex; gap: 40px; justify-content: center; margin-top: 56px;
+    flex-wrap: wrap;
+  }
+  .stat { text-align: center; }
+  .stat-num {
+    font-family: 'Sora', sans-serif; font-weight: 800; font-size: 2rem; color: white;
+  }
+  .stat-label { font-size: 0.85rem; color: rgba(255,255,255,0.6); margin-top: 2px; }
+
+  /* ── TOOLS PAGE ── */
+  .tools-page { padding: 48px 24px; max-width: 1100px; margin: 0 auto; }
+
+  .page-header {
+    text-align: center; margin-bottom: 48px;
+  }
+  .page-header h2 {
+    font-family: 'Sora', sans-serif; font-weight: 800; font-size: 2.2rem;
+    color: var(--blue-deep); margin-bottom: 10px;
+  }
+  .page-header p { color: var(--gray-600); font-size: 1.05rem; }
+
+  .tools-filter {
+    display: flex; gap: 10px; flex-wrap: wrap; justify-content: center;
+    margin-bottom: 36px;
+  }
+  .filter-btn {
+    padding: 8px 20px; border-radius: 100px;
+    background: white; border: 1.5px solid var(--gray-200);
+    font-weight: 600; font-size: 0.88rem; color: var(--gray-600);
+    cursor: pointer; transition: all 0.2s; font-family: 'Nunito', sans-serif;
+  }
+  .filter-btn:hover, .filter-btn.active {
+    background: var(--blue-mid); border-color: var(--blue-mid);
+    color: white;
+  }
+
+  .tools-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+  }
+
+  .tool-card {
+    background: white; border-radius: var(--radius); padding: 24px;
+    box-shadow: var(--shadow); border: 1px solid var(--gray-200);
+    transition: all 0.25s; cursor: pointer; text-decoration: none;
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .tool-card:hover {
+    transform: translateY(-4px); box-shadow: var(--shadow-lg);
+    border-color: var(--blue-sky);
+  }
+
+  .tool-icon {
+    width: 48px; height: 48px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem;
+  }
+
+  .tool-meta { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .tool-tag {
+    font-size: 0.75rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 100px; background: var(--blue-light); color: var(--blue-mid);
+    text-transform: uppercase; letter-spacing: 0.05em;
+  }
+  .tool-free {
+    font-size: 0.75rem; font-weight: 700; padding: 3px 10px;
+    border-radius: 100px; background: #d1fae5; color: #065f46;
+  }
+
+  .tool-card h3 {
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.1rem;
+    color: var(--blue-deep);
+  }
+  .tool-card p { font-size: 0.9rem; color: var(--gray-600); line-height: 1.6; }
+
+  .tool-link {
+    display: inline-flex; align-items: center; gap: 6px;
+    font-size: 0.88rem; font-weight: 700; color: var(--blue-mid);
+    text-decoration: none; margin-top: auto;
+  }
+  .tool-link:hover { color: var(--blue-deep); }
+
+  /* ── CHATBOX PAGE ── */
+  .chat-page {
+    display: none;
+    height: calc(100vh - 64px);
+    flex-direction: column;
+  }
+  .chat-page.active { display: flex; }
+
+  .chat-layout {
+    display: flex; flex: 1; overflow: hidden;
+  }
+
+  .chat-sidebar {
+    width: 280px; min-width: 280px;
+    background: white; border-right: 1px solid var(--gray-200);
+    display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  .sidebar-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--gray-200);
+  }
+  .sidebar-header h3 {
+    font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1rem;
+    color: var(--blue-deep); margin-bottom: 12px;
+  }
+
+  .mode-select {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+
+  .mode-btn {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px; border-radius: 10px;
+    background: var(--gray-100); border: none; cursor: pointer;
+    font-family: 'Nunito', sans-serif; font-weight: 600; font-size: 0.88rem;
+    color: var(--gray-600); transition: all 0.2s; text-align: left;
+  }
+  .mode-btn:hover, .mode-btn.active {
+    background: var(--blue-light); color: var(--blue-mid);
+  }
+  .mode-btn .mode-icon { font-size: 1.1rem; }
+
+  .sidebar-history {
+    flex: 1; overflow-y: auto; padding: 16px;
+  }
+  .sidebar-history h4 {
+    font-size: 0.78rem; font-weight: 700; color: var(--gray-600);
+    text-transform: uppercase; letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+  .history-item {
+    padding: 10px 12px; border-radius: 8px; cursor: pointer;
+    font-size: 0.88rem; color: var(--gray-600);
+    transition: background 0.15s; white-space: nowrap;
+    overflow: hidden; text-overflow: ellipsis;
+  }
+  .history-item:hover { background: var(--gray-100); }
+
+  /* Chat main */
+  .chat-main {
+    flex: 1; display: flex; flex-direction: column; overflow: hidden;
+    background: var(--gray-100);
+  }
+
+  .chat-header {
+    padding: 16px 24px; background: white;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .chat-header-info h3 {
+    font-family: 'Sora', sans-serif; font-weight: 700; color: var(--blue-deep);
+  }
+  .chat-header-info p { font-size: 0.85rem; color: var(--gray-600); }
+
+  .chat-mode-badge {
+    padding: 6px 14px; border-radius: 100px;
+    background: var(--blue-light); color: var(--blue-mid);
+    font-weight: 700; font-size: 0.82rem;
+  }
+
+  .chat-messages {
+    flex: 1; overflow-y: auto; padding: 24px;
+    display: flex; flex-direction: column; gap: 16px;
+  }
+
+  .message {
+    display: flex; gap: 12px; max-width: 760px;
+    animation: msgIn 0.3s ease;
+  }
+  @keyframes msgIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .message.user { flex-direction: row-reverse; margin-left: auto; }
+
+  .msg-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem; flex-shrink: 0;
+  }
+  .msg-avatar.ai {
+    background-color: var(--blue-light);
+    background-size: cover;
+    background-position: center;
+    color: transparent;
+    font-size: 0.85rem;
+  }
+  .msg-avatar.user {
+    background: var(--gray-200); font-size: 1.1rem;
+  }
+
+  .msg-bubble {
+    padding: 14px 18px; border-radius: 16px;
+    font-size: 0.95rem; line-height: 1.7;
+    max-width: calc(100% - 60px);
+  }
+  .message.ai .msg-bubble {
+    background: white; color: var(--gray-800);
+    border-bottom-left-radius: 4px;
+    box-shadow: 0 2px 12px rgba(26,86,219,0.08);
+  }
+  .message.user .msg-bubble {
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    color: white; border-bottom-right-radius: 4px;
+  }
+
+  .msg-bubble .math-block {
+    background: var(--blue-light); border-radius: 8px;
+    padding: 12px 16px; margin: 10px 0;
+    font-family: 'DM Mono', monospace; font-size: 0.9rem;
+    color: var(--blue-deep); border-left: 3px solid var(--blue-mid);
+  }
+
+  .msg-actions {
+    display: flex; gap: 8px; margin-top: 8px;
+  }
+  .msg-action-btn {
+    padding: 5px 12px; border-radius: 6px;
+    background: var(--blue-light); color: var(--blue-mid);
+    border: none; cursor: pointer; font-size: 0.8rem; font-weight: 700;
+    font-family: 'Nunito', sans-serif; transition: all 0.15s;
+  }
+  .msg-action-btn:hover { background: var(--blue-mid); color: white; }
+
+  /* Upload area */
+  .upload-area {
+    margin: 0 24px 12px;
+    border: 2px dashed var(--gray-200); border-radius: 12px;
+    padding: 14px; text-align: center;
+    background: white; cursor: pointer; transition: all 0.2s;
+    font-size: 0.88rem; color: var(--gray-600);
+    display: none;
+  }
+  .upload-area.show { display: block; }
+  .upload-area:hover { border-color: var(--blue-mid); color: var(--blue-mid); background: var(--blue-light); }
+
+    /* Math Symbols Keyboard */
+  .math-symbols-panel {
+    display: none;
+    background: white;
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-lg);
+    padding: 16px;
+    margin-bottom: 12px;
+    border: 1px solid var(--gray-200);
+    animation: fadeInScale 0.2s ease;
+  }
+  .math-symbols-panel.show {
+    display: block;
+  }
+  .symbol-categories {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 12px;
+    flex-wrap: wrap;
+  }
+  .sym-cat-btn {
+    padding: 5px 12px;
+    border-radius: 100px;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-100);
+    font-family: 'Nunito', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .sym-cat-btn.active, .sym-cat-btn:hover {
+    background: var(--blue-mid);
+    color: white;
+    border-color: var(--blue-mid);
+  }
+  .symbol-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+  .symbol-btn {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    border: 1px solid var(--gray-200);
+    background: var(--gray-100);
+    font-family: 'DM Mono', monospace;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .symbol-btn:hover {
+    background: var(--blue-light);
+    border-color: var(--blue-mid);
+    transform: scale(1.05);
+  }
+
+    /* Graph Modal */
+  #graph-modal {
+    z-index: 400;
+  }
+  .graph-modal-content {
+    position: relative;
+    background: white;
+    border-radius: 20px;
+    width: 95vw;
+    max-width: 1200px;
+    max-height: 90vh;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    animation: modalIn 0.3s ease;
+    display: flex;
+    flex-direction: column;
+  }
+  .graph-modal-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--gray-200);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .graph-modal-header h2 {
+    font-family: 'Sora', sans-serif;
+    font-weight: 800;
+    color: var(--blue-deep);
+    font-size: 1.3rem;
+  }
+  .graph-modal-header .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    color: var(--gray-600);
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+  }
+  .graph-modal-header .modal-close:hover {
+    background: var(--gray-100);
+  }
+  #graph-iframe {
+    border: none;
+    flex: 1;
+    min-height: 600px;
+  }
+
+  /* Chat input */
+  .chat-input-area {
+    padding: 16px 24px;
+    background: white; border-top: 1px solid var(--gray-200);
+  }
+
+  .input-toolbar {
+    display: flex; gap: 8px; margin-bottom: 10px;
+  }
+  .toolbar-btn {
+    padding: 6px 12px; border-radius: 8px;
+    background: var(--gray-100); border: none; cursor: pointer;
+    font-size: 0.82rem; font-weight: 600; color: var(--gray-600);
+    font-family: 'Nunito', sans-serif; transition: all 0.15s;
+    display: flex; align-items: center; gap: 5px;
+  }
+  .toolbar-btn:hover { background: var(--blue-light); color: var(--blue-mid); }
+
+  .input-row {
+    display: flex; gap: 10px; align-items: flex-end;
+  }
+
+  .chat-textarea {
+    flex: 1; padding: 12px 16px; border-radius: 12px;
+    border: 1.5px solid var(--gray-200); font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem; resize: none; outline: none;
+    min-height: 44px; max-height: 140px; line-height: 1.5;
+    transition: border-color 0.2s;
+  }
+  .chat-textarea:focus { border-color: var(--blue-mid); }
+
+  .send-btn {
+    width: 44px; height: 44px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    border: none; cursor: pointer; display: flex;
+    align-items: center; justify-content: center;
+    font-size: 1.2rem; transition: all 0.2s; flex-shrink: 0;
+  }
+  .send-btn:hover { transform: scale(1.05); box-shadow: 0 4px 16px rgba(26,86,219,0.35); }
+
+  /* ── CORNER ASSISTANT ── */
+  .corner-assistant {
+    position: fixed; bottom: 24px; right: 24px; z-index: 200;
+  }
+  #corner-assistant {
+  display: none;
+  }
+
+  .assistant-toggle {
+    width: 60px; height: 60px; border-radius: 50%;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-sky));
+    border: none; cursor: pointer; box-shadow: 0 4px 24px rgba(26,86,219,0.4);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem; transition: all 0.3s;
+    animation: pulse-btn 3s ease-in-out infinite;
+  }
+  @keyframes pulse-btn {
+    0%,100% { box-shadow: 0 4px 24px rgba(26,86,219,0.4); }
+    50% { box-shadow: 0 4px 36px rgba(26,86,219,0.6); }
+  }
+  .assistant-toggle:hover { transform: scale(1.08); }
+
+  .assistant-panel {
+    position: absolute; bottom: 72px; right: 0;
+    width: 340px; background: white; border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(26,86,219,0.2);
+    overflow: hidden; display: none; flex-direction: column;
+    animation: slideUp 0.3s ease;
+    border: 1px solid var(--gray-200);
+  }
+  .assistant-panel.open { display: flex; }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .assistant-panel-header {
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    padding: 16px 18px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .assistant-avatar {
+    width: 40px; height: 40px; background: rgba(255,255,255,0.2);
+    border-radius: 50%; display: flex; align-items: center;
+    justify-content: center; font-size: 1.3rem;
+  }
+  .assistant-info h4 {
+    font-family: 'Sora', sans-serif; font-weight: 700; color: white; font-size: 0.95rem;
+  }
+  .assistant-info p { font-size: 0.78rem; color: rgba(255,255,255,0.7); }
+  .online-dot {
+    width: 8px; height: 8px; background: #4ade80;
+    border-radius: 50%; margin-left: auto;
+    box-shadow: 0 0 0 2px rgba(74,222,128,0.3);
+  }
+
+  .assistant-messages {
+    padding: 16px; max-height: 260px; overflow-y: auto;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+
+  .assist-msg {
+    font-size: 0.88rem; line-height: 1.6;
+    padding: 10px 14px; border-radius: 12px;
+    background: var(--gray-100); color: var(--gray-800);
+    border-bottom-left-radius: 3px;
+  }
+  .assist-msg.user {
+    background: var(--blue-light); color: var(--blue-deep);
+    border-bottom-left-radius: 12px; border-bottom-right-radius: 3px;
+    margin-left: auto; max-width: 85%;
+  }
+
+  .quick-questions {
+    padding: 0 16px 12px;
+    display: flex; flex-wrap: wrap; gap: 6px;
+  }
+  .quick-q {
+    padding: 6px 12px; border-radius: 8px;
+    background: var(--blue-light); color: var(--blue-mid);
+    border: none; cursor: pointer; font-size: 0.78rem; font-weight: 700;
+    font-family: 'Nunito', sans-serif; transition: all 0.15s;
+  }
+  .quick-q:hover { background: var(--blue-mid); color: white; }
+
+  .assistant-input-row {
+    padding: 12px 16px; border-top: 1px solid var(--gray-200);
+    display: flex; gap: 8px;
+  }
+  .assist-input {
+    flex: 1; padding: 8px 12px; border-radius: 10px;
+    border: 1.5px solid var(--gray-200); font-family: 'Nunito', sans-serif;
+    font-size: 0.88rem; outline: none;
+  }
+  .assist-input:focus { border-color: var(--blue-mid); }
+  .assist-send {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: var(--blue-mid); border: none; cursor: pointer;
+    color: white; font-size: 1rem; display: flex;
+    align-items: center; justify-content: center;
+  }
+
+  /* ── MODAL ── */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 300;
+    background: rgba(10,31,110,0.4); backdrop-filter: blur(6px);
+    align-items: center; justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: white; border-radius: 20px; padding: 36px;
+    width: min(420px, 92vw); box-shadow: var(--shadow-lg);
+    animation: modalIn 0.3s ease;
+  }
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.94); }
+    to { opacity: 1; transform: scale(1); }
+  }
+
+  .modal h2 {
+    font-family: 'Sora', sans-serif; font-weight: 800;
+    font-size: 1.5rem; color: var(--blue-deep); margin-bottom: 6px;
+  }
+  .modal p { color: var(--gray-600); font-size: 0.9rem; margin-bottom: 24px; }
+
+  .modal-tabs {
+    display: flex; gap: 4px; background: var(--gray-100);
+    border-radius: 10px; padding: 4px; margin-bottom: 24px;
+  }
+  .modal-tab {
+    flex: 1; padding: 8px; border-radius: 8px;
+    border: none; background: none; font-family: 'Nunito', sans-serif;
+    font-weight: 700; font-size: 0.9rem; cursor: pointer; color: var(--gray-600);
+    transition: all 0.2s;
+  }
+  .modal-tab.active { background: white; color: var(--blue-mid); box-shadow: 0 2px 8px rgba(26,86,219,0.12); }
+
+  .form-group { margin-bottom: 16px; }
+  .form-group label {
+    display: block; font-weight: 700; font-size: 0.88rem;
+    color: var(--gray-800); margin-bottom: 6px;
+  }
+  .form-group input {
+    width: 100%; padding: 11px 14px; border-radius: 10px;
+    border: 1.5px solid var(--gray-200); font-family: 'Nunito', sans-serif;
+    font-size: 0.95rem; outline: none; transition: border-color 0.2s;
+  }
+  .form-group input:focus { border-color: var(--blue-mid); }
+
+  .modal-submit {
+    width: 100%; padding: 12px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+    color: white; font-weight: 800; font-size: 1rem;
+    border: none; cursor: pointer; font-family: 'Nunito', sans-serif;
+    transition: all 0.2s; margin-bottom: 14px;
+  }
+  .modal-submit:hover { transform: translateY(-1px); box-shadow: 0 4px 20px rgba(26,86,219,0.35); }
+
+  .modal-note {
+    text-align: center; font-size: 0.82rem; color: var(--gray-600);
+  }
+  .modal-close {
+    float: right; background: none; border: none; cursor: pointer;
+    font-size: 1.3rem; color: var(--gray-600); margin-top: -8px;
+  }
+
+  /* Typing indicator */
+  .typing-indicator {
+    display: flex; gap: 5px; align-items: center; padding: 14px 18px;
+  }
+  .typing-dot {
+    width: 8px; height: 8px; background: var(--blue-sky); border-radius: 50%;
+    animation: typingBounce 1.2s ease-in-out infinite;
+  }
+  .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes typingBounce {
+    0%,60%,100% { transform: translateY(0); }
+    30% { transform: translateY(-8px); }
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 3px; }
+
+  /* Mobile */
+  @media (max-width: 680px) {
+    .chat-sidebar { display: none; }
+    nav { padding: 0 16px; }
+    .hero h1 { font-size: 2rem; }
+    .tools-page { padding: 32px 16px; }
+  }
+
+  /* ── BRILLIANT-INSPIRED ANIMATIONS ── */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeInScale {
+    from { opacity: 0; transform: scale(0.92); }
+    to   { opacity: 1; transform: scale(1); }
+  }
+  @keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+  }
+  @keyframes orbit {
+    from { transform: rotate(0deg) translateX(180px) rotate(0deg); }
+    to   { transform: rotate(360deg) translateX(180px) rotate(-360deg); }
+  }
+
+  .reveal {
+    opacity: 0;
+    transform: translateY(28px);
+    transition: opacity 0.65s cubic-bezier(.22,1,.36,1), transform 0.65s cubic-bezier(.22,1,.36,1);
+  }
+  .reveal.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Stagger children of a revealed container */
+  .reveal-group > * {
+    opacity: 0;
+    transform: translateY(24px);
+    transition: opacity 0.5s cubic-bezier(.22,1,.36,1), transform 0.5s cubic-bezier(.22,1,.36,1);
+  }
+  .reveal-group.visible > *:nth-child(1) { opacity:1; transform:none; transition-delay: 0s; }
+  .reveal-group.visible > *:nth-child(2) { opacity:1; transform:none; transition-delay: 0.1s; }
+  .reveal-group.visible > *:nth-child(3) { opacity:1; transform:none; transition-delay: 0.2s; }
+  .reveal-group.visible > *:nth-child(4) { opacity:1; transform:none; transition-delay: 0.3s; }
+
+  /* Shimmer effect on tool cards hover */
+  .tool-card::after {
+    content: '';
+    position: absolute; inset: 0; border-radius: var(--radius);
+    background: linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.5) 50%, transparent 60%);
+    background-size: 200% 100%;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .tool-card { position: relative; overflow: hidden; }
+  .tool-card:hover::after { opacity: 1; animation: shimmer 0.6s ease forwards; }
+
+  /* Orbiting math symbols in hero */
+  .hero-orbit {
+    position: absolute; width: 360px; height: 360px;
+    top: 50%; left: 50%; margin: -180px 0 0 -180px;
+    pointer-events: none; opacity: 0.12;
+  }
+  .orbit-sym {
+    position: absolute; top: 50%; left: 50%;
+    font-family: 'DM Mono', monospace; font-size: 1.4rem; color: white;
+    margin: -12px 0 0 -12px;
+  }
+  .orbit-sym:nth-child(1) { animation: orbit 18s linear infinite; }
+  .orbit-sym:nth-child(2) { animation: orbit 24s linear infinite reverse; animation-delay: -4s; }
+  .orbit-sym:nth-child(3) { animation: orbit 14s linear infinite; animation-delay: -8s; }
+  .orbit-sym:nth-child(4) { animation: orbit 20s linear infinite reverse; animation-delay: -2s; }
+
+  /* Hero content entrance */
+  .hero-content { animation: fadeInUp 0.9s cubic-bezier(.22,1,.36,1) both; }
+
+  /* Stat number count-up shimmer */
+  .stat-num {
+    background: linear-gradient(90deg, #fff 0%, #a0d4ff 50%, #fff 100%);
+    background-size: 200% auto;
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: shimmer 3s linear infinite;
+  }
+
+  /* Feature card entrance */
+  .feature-card {
+    transition: transform 0.3s cubic-bezier(.22,1,.36,1), box-shadow 0.3s;
+  }
+  .feature-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 24px 64px rgba(26,86,219,0.18);
+  }
+
+  /* Mode button active pulse */
+  .mode-btn.active {
+    animation: fadeInScale 0.25s ease both;
+  }
+
+  /* Send button ripple */
+  .send-btn { overflow: hidden; }
+  .send-btn::after {
+    content: '';
+    position: absolute; width: 100%; height: 100%;
+    background: rgba(255,255,255,0.3);
+    border-radius: 50%; top: 0; left: 0;
+    transform: scale(0); opacity: 0;
+    transition: transform 0.4s, opacity 0.4s;
+  }
+  .send-btn:active::after { transform: scale(2.5); opacity: 0; }
+  .send-btn { position: relative; }
+
+  /* Drop overlay for drag & drop */
+.drop-overlay {
+  position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(26,86,219,0.15);
+  backdrop-filter: blur(6px);
+  display: none; align-items: center; justify-content: center;
+  z-index: 500; pointer-events: none;
+}
+.drop-overlay.active {
+  display: flex; pointer-events: auto;
+}
+.drop-overlay-content {
+  background: white; border-radius: 24px; padding: 48px;
+  text-align: center; box-shadow: 0 20px 60px rgba(26,86,219,0.25);
+  font-family: 'Sora', sans-serif; font-weight: 700; font-size: 1.3rem;
+  color: var(--blue-deep);
+  border: 3px dashed var(--blue-mid);
+}
+/* Collapsed sidebar */
+.chat-sidebar.collapsed {
+  width: 0;
+  min-width: 0;
+  overflow: hidden;
+  padding: 0;
+  border-right: none;
+  opacity: 0;
+  transition: width 0.25s, opacity 0.25s;
+}
+.sidebar-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 6px;
+  color: var(--gray-600);
+  position: absolute;
+  top: 16px;
+  right: 8px;
+  transition: background 0.2s;
+}
+.sidebar-toggle:hover {
+  background: var(--blue-light);
+}
+.chat-sidebar .sidebar-header {
+  position: relative; /* to position the toggle */
+}
+.sidebar-expand-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  color: var(--gray-600);
+  transition: background 0.2s;
+}
+.sidebar-expand-btn:hover {
+  background: var(--gray-200);
+}
+/* Compact header when sidebar is collapsed */
+.chat-header.compact .chat-header-info p {
+  display: none;                     /* hide subtitle */
+}
+.chat-header.compact .chat-header-info h3 {
+  font-size: 1rem;                   /* slightly smaller title */
+  margin: 0;
+}
+.chat-header.compact {
+  padding: 10px 16px;                /* less padding */
+}
+
+/* Ko‑fi button matching sidebar mode active style */
+.sidebar-kofi {
+  padding: 12px 16px;
+  border-top: 1px solid var(--gray-200);
+  margin-top: auto;
+}
+.kofi-btn {
+  display: block;
+  text-align: center;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: var(--blue-light);         /* same as active mode */
+  color: var(--blue-mid);                /* same as active mode */
+  font-weight: 600;
+  font-size: 0.88rem;
+  text-decoration: none;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.kofi-btn:hover {
+  background: #cbddfb;                  /* slightly darker light blue */
+  border-color: var(--blue-mid);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(26,86,219,0.1);
+}
+
+
+/* ══ CALCULATOR STYLES ══ */
+
+/* Sidebar calculator button */
+#mode-calculator {
+  background: var(--gray-100);
+}
+#mode-calculator:hover, #mode-calculator.active {
+  background: linear-gradient(135deg, var(--blue-light), #e0f2fe);
+  color: var(--blue-mid);
+}
+
+/* ── FLOATING SIDEBAR CALCULATOR WINDOW ── */
+#sidebar-calc-window {
+  display: none;
+  position: fixed;
+  z-index: 250;
+  left: 288px;
+  top: 80px;
+  width: 320px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(26,86,219,0.22), 0 4px 16px rgba(26,86,219,0.12);
+  border: 1px solid var(--gray-200);
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeInScale 0.25s ease;
+  user-select: none;
+}
+#sidebar-calc-window.open { display: flex; }
+
+.calc-window-header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, var(--blue-deep), var(--blue-mid));
+  cursor: move;
+}
+.calc-window-title {
+  font-family: 'Sora', sans-serif; font-weight: 700;
+  color: white; font-size: 0.9rem;
+  display: flex; align-items: center; gap: 6px;
+}
+.calc-window-controls {
+  display: flex; gap: 4px;
+}
+.calc-ctrl-btn {
+  width: 24px; height: 24px; border-radius: 6px; border: none;
+  cursor: pointer; font-size: 0.8rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+}
+.calc-ctrl-btn.minimize {
+  background: rgba(255,255,255,0.15); color: white;
+}
+.calc-ctrl-btn.minimize:hover { background: rgba(255,255,255,0.3); }
+.calc-ctrl-btn.close-btn {
+  background: rgba(239,68,68,0.7); color: white;
+}
+.calc-ctrl-btn.close-btn:hover { background: #ef4444; }
+
+/* Topic selector panel (collapsible) */
+.calc-topic-bar {
+  border-bottom: 1px solid var(--gray-200);
+  background: var(--gray-100);
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  max-height: 120px;
+}
+.calc-topic-bar.collapsed { max-height: 0; }
+
+.calc-topic-toggle {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 8px 14px;
+  font-size: 0.78rem; font-weight: 700; color: var(--gray-600);
+  text-transform: uppercase; letter-spacing: 0.07em;
+  cursor: pointer; background: var(--gray-100);
+  border: none; width: 100%; text-align: left;
+  font-family: 'Nunito', sans-serif;
+}
+.calc-topic-toggle svg { transition: transform 0.25s; }
+.calc-topic-bar.collapsed .calc-topic-toggle svg { transform: rotate(-90deg); }
+
+.calc-topic-scroll {
+  display: flex; flex-wrap: wrap; gap: 5px;
+  padding: 0 10px 8px;
+  max-height: 72px; overflow-y: auto;
+}
+.calc-topic-btn {
+  padding: 4px 10px; border-radius: 100px;
+  background: white; border: 1.5px solid var(--gray-200);
+  font-size: 0.75rem; font-weight: 700; color: var(--gray-600);
+  cursor: pointer; transition: all 0.15s; font-family: 'Nunito', sans-serif;
+  white-space: nowrap;
+}
+.calc-topic-btn.active {
+  background: var(--blue-mid); border-color: var(--blue-mid); color: white;
+}
+
+/* Calculator screen */
+.calc-screen {
+  padding: 10px 14px;
+  background: #0a1f6e;
+  min-height: 70px;
+  display: flex; flex-direction: column; justify-content: flex-end;
+  gap: 4px;
+}
+.calc-screen-expr {
+  font-family: 'DM Mono', monospace; font-size: 0.88rem;
+  color: rgba(255,255,255,0.55); text-align: right;
+  min-height: 18px; word-break: break-all;
+}
+.calc-screen-main {
+  font-family: 'DM Mono', monospace; font-size: 1.4rem;
+  color: white; text-align: right; word-break: break-all;
+}
+.calc-screen-cursor {
+  display: inline-block; width: 2px; height: 1.1em;
+  background: var(--accent); vertical-align: text-bottom;
+  animation: blink 1s step-end infinite; margin-left: 2px;
+}
+@keyframes blink { 0%,100%{opacity:1;} 50%{opacity:0;} }
+
+/* Calculator keyboard */
+.calc-keyboard {
+  padding: 8px;
+  display: flex; flex-direction: column; gap: 4px;
+}
+.calc-key-tabs {
+  display: flex; gap: 4px; margin-bottom: 4px;
+}
+.calc-key-tab {
+  flex: 1; padding: 5px; border-radius: 8px;
+  background: var(--gray-100); border: none;
+  font-size: 0.72rem; font-weight: 700; color: var(--gray-600);
+  cursor: pointer; transition: all 0.15s; font-family: 'Nunito', sans-serif;
+}
+.calc-key-tab.active {
+  background: var(--blue-mid); color: white;
+}
+.calc-key-grid {
+  display: grid; gap: 4px;
+  grid-template-columns: repeat(5, 1fr);
+}
+.calc-key {
+  padding: 8px 4px; border-radius: 8px;
+  border: 1px solid var(--gray-200); background: var(--gray-100);
+  font-family: 'DM Mono', monospace; font-size: 0.82rem;
+  cursor: pointer; transition: all 0.12s;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 36px; color: var(--gray-800);
+}
+.calc-key:hover { background: var(--blue-light); border-color: var(--blue-mid); transform: scale(1.05); }
+.calc-key:active { transform: scale(0.96); }
+.calc-key.operator { background: #eff6ff; color: var(--blue-mid); font-weight: 700; }
+.calc-key.action { background: var(--blue-light); color: var(--blue-deep); font-weight: 700; }
+.calc-key.solve-key {
+  background: linear-gradient(135deg, var(--blue-mid), var(--blue-bright));
+  color: white; font-weight: 800; border: none;
+  grid-column: span 2;
+  font-family: 'Nunito', sans-serif; font-size: 0.85rem;
+}
+.calc-key.solve-key:hover { transform: none; box-shadow: 0 4px 16px rgba(26,86,219,0.35); }
+.calc-key.backspace { background: #fef2f2; color: #ef4444; border-color: #fecaca; }
+.calc-key.clear { background: #fef2f2; color: #dc2626; font-weight: 800; border-color: #fecaca; }
+.calc-key.graph-key { background: #f0fdf4; color: #16a34a; border-color: #bbf7d0; }
+
+/* Send to chat toggle */
+.calc-chat-toggle {
+  padding: 6px 12px;
+  display: flex; align-items: center; gap: 8px;
+  border-top: 1px solid var(--gray-200);
+  background: var(--gray-100);
+  font-size: 0.78rem; font-weight: 600; color: var(--gray-600);
+  font-family: 'Nunito', sans-serif;
+}
+.calc-chat-toggle label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+.toggle-switch {
+  width: 32px; height: 18px; background: var(--gray-200);
+  border-radius: 100px; position: relative; transition: background 0.2s;
+  cursor: pointer; flex-shrink: 0;
+}
+.toggle-switch.on { background: var(--blue-mid); }
+.toggle-switch::after {
+  content: ''; position: absolute; width: 14px; height: 14px;
+  background: white; border-radius: 50%; top: 2px; left: 2px;
+  transition: left 0.2s; box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+}
+.toggle-switch.on::after { left: 16px; }
+
+/* ── FLOATING ANSWER PANEL ── */
+#sidebar-calc-answer {
+  display: none;
+  position: fixed;
+  z-index: 249;
+  left: 616px;
+  top: 80px;
+  width: 300px;
+  max-height: 520px;
+  background: white;
+  border-radius: 20px;
+  box-shadow: 0 24px 64px rgba(26,86,219,0.18);
+  border: 1px solid var(--gray-200);
+  flex-direction: column;
+  overflow: hidden;
+  animation: fadeInScale 0.25s ease;
+}
+#sidebar-calc-answer.open { display: flex; }
+
+.calc-answer-header {
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #0a1f6e, var(--blue-mid));
+  display: flex; align-items: center; justify-content: space-between;
+}
+.calc-answer-header h4 {
+  font-family: 'Sora', sans-serif; font-weight: 700;
+  color: white; font-size: 0.88rem;
+}
+.calc-answer-close {
+  background: rgba(255,255,255,0.15); border: none; border-radius: 6px;
+  color: white; cursor: pointer; padding: 4px 8px; font-size: 0.8rem;
+  transition: background 0.15s;
+}
+.calc-answer-close:hover { background: rgba(255,255,255,0.3); }
+
+.calc-answer-body {
+  flex: 1; overflow-y: auto; padding: 14px;
+  font-size: 0.9rem; line-height: 1.7; color: var(--gray-800);
+}
+.calc-answer-body.loading {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 80px; gap: 6px; color: var(--gray-600); font-size: 0.85rem;
+}
+
+/* ── CHAT TOOLBAR CALCULATOR PANEL ── */
+#chat-calc-panel {
+  display: none;
+  background: white; border-radius: var(--radius);
+  box-shadow: var(--shadow-lg); padding: 12px;
+  margin-bottom: 10px; border: 1px solid var(--gray-200);
+  animation: fadeInScale 0.2s ease;
+}
+#chat-calc-panel.show { display: block; }
+
+.chat-calc-topic-row {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap;
+}
+.chat-calc-topic-label {
+  font-size: 0.78rem; font-weight: 700; color: var(--gray-600);
+  font-family: 'Nunito', sans-serif; text-transform: uppercase;
+  letter-spacing: 0.06em; white-space: nowrap;
+}
+.chat-calc-topic-select {
+  flex: 1; padding: 5px 10px; border-radius: 8px;
+  border: 1.5px solid var(--gray-200); font-family: 'Nunito', sans-serif;
+  font-size: 0.82rem; color: var(--gray-800); outline: none;
+  transition: border-color 0.2s; min-width: 140px;
+}
+.chat-calc-topic-select:focus { border-color: var(--blue-mid); }
+
+.chat-calc-key-tabs {
+  display: flex; gap: 4px; margin-bottom: 8px; flex-wrap: wrap;
+}
+.chat-calc-key-tab {
+  padding: 4px 10px; border-radius: 100px;
+  background: var(--gray-100); border: 1px solid var(--gray-200);
+  font-size: 0.75rem; font-weight: 700; color: var(--gray-600);
+  cursor: pointer; transition: all 0.15s; font-family: 'Nunito', sans-serif;
+}
+.chat-calc-key-tab.active { background: var(--blue-mid); color: white; border-color: var(--blue-mid); }
+
+.chat-calc-key-grid {
+  display: flex; flex-wrap: wrap; gap: 5px;
+}
+.chat-calc-key {
+  width: 44px; height: 40px; border-radius: 9px;
+  border: 1px solid var(--gray-200); background: var(--gray-100);
+  font-family: 'DM Mono', monospace; font-size: 0.85rem;
+  cursor: pointer; transition: all 0.12s;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gray-800);
+}
+.chat-calc-key:hover { background: var(--blue-light); border-color: var(--blue-mid); transform: scale(1.05); }
+.chat-calc-key:active { transform: scale(0.96); }
+.chat-calc-key.op { background: #eff6ff; color: var(--blue-mid); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="#" onclick="showPage('home')">
+    <div class="logo-icon">
+      <svg viewBox="380 60 440 340" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="navBlueGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#18B6FF"/>
+            <stop offset="100%" stop-color="#0A46D8"/>
+          </linearGradient>
+        </defs>
+        <path d="M420 120 Q470 60 520 110 L600 180 L680 110 Q730 60 780 120 L780 360 Q780 390 755 390 Q730 390 730 360 L730 170 L600 280 L470 170 L470 360 Q470 390 445 390 Q420 390 420 360 Z" fill="url(#navBlueGrad)"/>
+        <text x="540" y="250" font-size="70" font-family="Arial" font-weight="bold" fill="#0A46D8">+</text>
+        <text x="540" y="320" font-size="70" font-family="Arial" font-weight="bold" fill="#0A46D8">×</text>
+        <text x="650" y="250" font-size="70" font-family="Arial" font-weight="bold" fill="#0A46D8">−</text>
+        <text x="650" y="320" font-size="70" font-family="Arial" font-weight="bold" fill="#0A46D8">=</text>
+      </svg>
+    </div>
+    Math<span>Desk</span>
+  </a>
+  <div class="nav-links">
+    <button class="nav-link active" onclick="showPage('home')">Home</button>
+    <button class="nav-link" onclick="showPage('tools')">Tools</button>
+    <button class="nav-link" onclick="showPage('chat')">AI Chatbox</button>
+    <button class="nav-btn" onclick="openModal()">Login / Sign Up</button>
+  </div>
+</nav>
+
+<div class="app">
+
+  <!-- ══ HOME ══ -->
+  <div id="page-home" class="page active">
+    <div class="hero">
+      <div class="hero-orbit">
+        <span class="orbit-sym">∫</span>
+        <span class="orbit-sym">π</span>
+        <span class="orbit-sym">∑</span>
+        <span class="orbit-sym">√</span>
+      </div>
+      <div class="hero-math-bg">
+        <span class="math-symbol" style="top:8%;left:5%;animation-delay:0s">∫</span>
+        <span class="math-symbol" style="top:15%;left:88%;animation-delay:1s">π</span>
+        <span class="math-symbol" style="top:60%;left:3%;animation-delay:2s">√</span>
+        <span class="math-symbol" style="top:70%;left:92%;animation-delay:0.5s">Σ</span>
+        <span class="math-symbol" style="top:30%;left:75%;animation-delay:1.5s">∞</span>
+        <span class="math-symbol" style="top:80%;left:20%;animation-delay:3s">Δ</span>
+        <span class="math-symbol" style="top:45%;left:95%;animation-delay:2.5s">θ</span>
+        <span class="math-symbol" style="top:5%;left:45%;animation-delay:0.8s">≈</span>
+      </div>
+      <div class="hero-content">
+        <div style="display:flex;justify-content:center;margin-bottom:24px;">
+          <svg width="240" height="170" viewBox="260 45 700 570" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <linearGradient id="heroGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#18B6FF"/>
+                <stop offset="100%" stop-color="#0A46D8"/>
+              </linearGradient>
+            </defs>
+            <path d="M420 120 Q470 60 520 110 L600 180 L680 110 Q730 60 780 120 L780 360 Q780 390 755 390 Q730 390 730 360 L730 170 L600 280 L470 170 L470 360 Q470 390 445 390 Q420 390 420 360 Z" fill="url(#heroGrad)"/>
+            <text x="540" y="250" font-size="70" font-family="Arial" font-weight="bold" fill="rgba(255,255,255,0.75)">+</text>
+            <text x="540" y="320" font-size="70" font-family="Arial" font-weight="bold" fill="rgba(255,255,255,0.75)">x</text>
+            <text x="650" y="250" font-size="70" font-family="Arial" font-weight="bold" fill="rgba(255,255,255,0.75)">-</text>
+            <text x="650" y="320" font-size="70" font-family="Arial" font-weight="bold" fill="rgba(255,255,255,0.75)">=</text>
+            <text x="295" y="500" font-size="112" font-family="Arial" font-weight="700" fill="#ffffff">Math</text>
+            <text x="613" y="500" font-size="112" font-family="Arial" font-weight="700" fill="#56d0ff">Desk</text>
+            <text x="295" y="570" font-size="33" font-family="Arial" letter-spacing="5" fill="rgba(255,255,255,0.5)">ASK. LEARN. UNDERSTAND.</text>
+          </svg>
+        </div>
+        <div class="hero-badge">Free for everyone, always</div>
+        <h1>Math help that actually <span>makes sense</span></h1>
+        <p>Got a math problem? Desky's got you. Step-by-step solutions, concept explanations, and practice problems — all in one place.</p>
+        <div class="hero-ctas">
+          <button class="btn-primary" onclick="showPage('chat')">💬 Ask Desky</button>
+          <button class="btn-outline" onclick="showPage('tools')">📚 Tool Library</button>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><div class="stat-num">15+</div><div class="stat-label">Curated Math Tools</div></div>
+          <div class="stat"><div class="stat-num">3-in-1</div><div class="stat-label">AI Modes</div></div>
+          <div class="stat"><div class="stat-num">Free</div><div class="stat-label">Always & Forever</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Feature cards -->
+    <div style="max-width:1100px;margin:0 auto;padding:64px 24px;">
+      <div style="text-align:center;margin-bottom:48px;">
+        <h2 style="font-family:'Sora',sans-serif;font-weight:800;font-size:2rem;color:var(--blue-deep);">Everything you need to master math</h2>
+        <p style="color:var(--gray-600);margin-top:8px;">No tutor needed. No expensive apps. Just MathDesk.</p>
+      </div>
+      <div class="reveal-group" style="display:grid; grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); gap:24px; opacity:1 !important; transform:none !important;">
+        <div class="feature-card" style="background:white;border-radius:20px;padding:28px;box-shadow:var(--shadow);">
+          <div style="font-size:2.2rem;margin-bottom:16px;">📤</div>
+          <h3 style="font-family:'Sora',sans-serif;font-weight:700;color:var(--blue-deep);margin-bottom:8px;">Upload a Lesson</h3>
+          <p style="color:var(--gray-600);line-height:1.7;font-size:0.95rem;">Paste text, upload a file, or take a photo of your lesson. MathDesk's AI will generate practice problems tailored to your topic.</p>
+        </div>
+        <div class="feature-card" style="background:white;border-radius:20px;padding:28px;box-shadow:var(--shadow);">
+          <div style="font-size:2.2rem;margin-bottom:16px;">🔍</div>
+          <h3 style="font-family:'Sora',sans-serif;font-weight:700;color:var(--blue-deep);margin-bottom:8px;">Solve with Explanation</h3>
+          <p style="color:var(--gray-600);line-height:1.7;font-size:0.95rem;">Type, paste, or photograph any math problem. Get a full step-by-step solution with reasoning, not just the answer.</p>
+        </div>
+        <div class="feature-card" style="background:white;border-radius:20px;padding:28px;box-shadow:var(--shadow);">
+          <div style="font-size:2.2rem;margin-bottom:16px;">🔧</div>
+          <h3 style="font-family:'Sora',sans-serif;font-weight:700;color:var(--blue-deep);margin-bottom:8px;">Curated Tool Directory</h3>
+          <p style="color:var(--gray-600);line-height:1.7;font-size:0.95rem;">All the best math websites and tools in one place: calculators, graphers, textbook solvers, and more.</p>
+        </div>
+        <div class="feature-card" style="background:white;border-radius:20px;padding:28px;box-shadow:var(--shadow);">
+          <div style="font-size:2.2rem;margin-bottom:16px;">💾</div>
+          <h3 style="font-family:'Sora',sans-serif;font-weight:700;color:var(--blue-deep);margin-bottom:8px;">Save Your Progress</h3>
+          <p style="color:var(--gray-600);line-height:1.7;font-size:0.95rem;">Optional account creation. Log in to save your chat history, solved problems, and practice sessions across devices.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ TOOLS ══ -->
+  <div id="page-tools" class="page">
+    <div class="tools-page">
+      <div class="page-header reveal">
+        <h2>📚 Math Tools & Websites</h2>
+        <p>The best free resources for every math topic, handpicked and organized.</p>
+      </div>
+
+      <div class="tools-filter">
+        <button class="filter-btn active" onclick="filterTools(this,'all')">All</button>
+        <button class="filter-btn" onclick="filterTools(this,'solver')">Problem Solvers</button>
+        <button class="filter-btn" onclick="filterTools(this,'graphing')">Graphing</button>
+        <button class="filter-btn" onclick="filterTools(this,'textbook')">Textbooks</button>
+        <button class="filter-btn" onclick="filterTools(this,'reference')">Reference</button>
+        <button class="filter-btn" onclick="filterTools(this,'practice')">Practice</button>
+      </div>
+
+      <div class="tools-grid" id="tools-grid">
+        <!-- Populated by JS -->
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CHAT ══ -->
+  <div id="page-chat" class="page chat-page">
+    <div class="chat-layout">
+      <!-- Sidebar -->
+      <div class="chat-sidebar">
+        <div class="sidebar-header">
+          <h3>AI Math Assistant</h3>
+          <button class="sidebar-toggle" onclick="toggleSidebar()" title="Collapse sidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+          </button>
+          <div class="mode-select">
+            <button class="mode-btn active" onclick="setMode(this,'solve')" id="mode-solve">
+              <span class="mode-icon">🔍</span> Solve a Problem
+            </button>
+            <button class="mode-btn" onclick="setMode(this,'learn')" id="mode-learn">
+              <span class="mode-icon">📖</span> Learn from Lesson
+            </button>
+            <button class="mode-btn" onclick="setMode(this,'practice')" id="mode-practice">
+              <span class="mode-icon">✏️</span> Generate Practice
+            </button>
+            <button class="mode-btn" onclick="toggleSidebarCalculator()" id="mode-calculator">
+              <span class="mode-icon">🧮</span> Calculator
+            </button>
+          </div>
+        </div>
+        <div class="sidebar-history">
+          <h4>Recent Chats</h4>
+          <div class="history-item">Quadratic formula help</div>
+          <div class="history-item">Integral of sin(x)dx</div>
+          <div class="history-item">Matrix multiplication</div>
+          <div class="history-item">Probability basics</div>
+        </div>
+        <div class="sidebar-kofi">
+          <a href="https://ko-fi.com/mathdesk" target="_blank" rel="noopener" class="kofi-btn">
+            ☕ Buy me a coffee
+          </a>
+        </div>
+      </div>
+
+      <!-- Main Chat -->
+      <div class="chat-main">
+        <div class="chat-header">
+          <button class="sidebar-expand-btn" id="sidebar-expand-btn" onclick="toggleSidebar()" style="display:none;" title="Expand sidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+          <div class="chat-header-info">
+            <h3>MathDesk AI</h3>
+            <p>Powered by n8n + AI. Upload a problem or type below</p>
+          </div>
+          <div class="chat-mode-badge" id="mode-badge">🔍 Solve Mode</div>
+        </div>
+
+        <div class="chat-messages" id="chat-messages">
+          <div class="message ai">
+            <div class="msg-avatar ai" style="background-image:url('Desky.png');background-size:cover;background-position:center;">&nbsp;</div>
+            <div>
+              <div class="msg-bubble">
+                👋 Hi! I'm MathDesk AI. I can help you in three ways:<br><br>
+                <strong>🔍 Solve</strong>: paste or photo a problem and I'll solve it with full steps<br>
+                <strong>📖 Learn</strong>: upload a lesson and I'll explain it and give you examples<br>
+                <strong>✏️ Practice</strong>: tell me a topic and I'll generate practice problems<br><br>
+                Pick a mode on the left, or just start typing!
+              </div>
+              <div class="msg-actions">
+                <button class="msg-action-btn" onclick="quickPrompt('Solve: x² + 5x + 6 = 0')">Try a sample problem</button>
+                <button class="msg-action-btn" onclick="quickPrompt('Generate 3 practice problems on derivatives')">Generate practice</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="upload-area" id="upload-area" onclick="document.getElementById('file-input').click()">
+          📎 Click to upload a photo or file of your problem / lesson
+          <input type="file" id="file-input" style="display:none" accept="image/*,.pdf,.txt" onchange="handleFileUpload(this)">
+        </div>
+
+        <div class="chat-input-area">
+          <!-- Math Symbols Keyboard -->
+          <div class="math-symbols-panel" id="math-symbols-panel">
+            <div class="symbol-categories">
+              <button class="sym-cat-btn active" data-cat="basic">Basic</button>
+              <button class="sym-cat-btn" data-cat="algebra">Algebra</button>
+              <button class="sym-cat-btn" data-cat="calculus">Calculus</button>
+              <button class="sym-cat-btn" data-cat="greek">Greek</button>
+              <button class="sym-cat-btn" data-cat="sets">Sets</button>
+            </div>
+            <div class="symbol-grid" id="symbol-grid"></div>
+          </div>
+          <!-- Chat Toolbar Calculator Panel -->
+          <div id="chat-calc-panel">
+            <div class="chat-calc-topic-row">
+              <span class="chat-calc-topic-label">Subject:</span>
+              <select class="chat-calc-topic-select" id="chat-calc-topic" onchange="chatCalcTopicChange()">
+                <option value="basic">Basic Math</option>
+                <option value="prealgebra">Pre-Algebra</option>
+                <option value="algebra">Algebra</option>
+                <option value="trig">Trigonometry</option>
+                <option value="precalc">Precalculus</option>
+                <option value="calculus">Calculus</option>
+                <option value="stats">Statistics</option>
+                <option value="finitemath">Finite Math</option>
+                <option value="linalg">Linear Algebra</option>
+              </select>
+            </div>
+            <div class="chat-calc-key-tabs" id="chat-calc-tabs"></div>
+            <div class="chat-calc-key-grid" id="chat-calc-keys"></div>
+          </div>
+          <div class="input-toolbar">
+            <button class="toolbar-btn" onclick="toggleUpload()">📎 Upload file/photo</button>
+            <button class="toolbar-btn" onclick="insertMath()">∑ Math symbols</button>
+            <button class="toolbar-btn" onclick="toggleChatCalculator()">🧮 Calculator</button>
+            <button class="toolbar-btn" onclick="openGraph()">📈 Graph</button>
+            <button class="toolbar-btn" onclick="clearChat()">🗑 Clear chat</button>
+          </div>
+          <div class="input-row">
+            <textarea class="chat-textarea" id="chat-input" placeholder="Type a problem, paste a lesson, or describe what you need help with..." rows="1"
+              onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"
+              oninput="autoResize(this)"></textarea>
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /app -->
+
+<!-- ══ CORNER ASSISTANT ══ -->
+<div class="corner-assistant" id="corner-assistant">
+  <div class="assistant-panel" id="assistant-panel">
+    <div class="assistant-panel-header">
+      <div class="assistant-avatar" style="background:none;padding:0;overflow:visible;">
+        <svg width="44" height="44" viewBox="430 670 340 500" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="mascotGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#18B6FF"/>
+              <stop offset="100%" stop-color="#0A46D8"/>
+            </linearGradient>
+          </defs>
+          <rect x="470" y="760" rx="80" ry="80" width="260" height="220" fill="#F7F9FC" stroke="#D9E1F2" stroke-width="4"/>
+          <rect x="505" y="800" rx="40" ry="40" width="190" height="130" fill="#081B46"/>
+          <line x1="600" y1="720" x2="600" y2="760" stroke="#6C7AA0" stroke-width="8"/>
+          <circle cx="600" cy="700" r="18" fill="url(#mascotGrad2)"/>
+          <path d="M545 855 Q560 835 575 855" stroke="#18E7FF" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path d="M625 855 Q640 835 655 855" stroke="#18E7FF" stroke-width="8" fill="none" stroke-linecap="round"/>
+          <path d="M565 895 Q600 925 635 895" stroke="#18E7FF" stroke-width="10" fill="none" stroke-linecap="round"/>
+          <rect x="500" y="950" rx="70" ry="70" width="200" height="210" fill="#F7F9FC" stroke="#D9E1F2" stroke-width="4"/>
+          <text x="560" y="1080" font-size="90" font-family="Arial" font-weight="700" fill="#0A46D8">M</text>
+          <line x1="500" y1="1010" x2="430" y2="950" stroke="#F7F9FC" stroke-width="28" stroke-linecap="round"/>
+          <circle cx="415" cy="935" r="20" fill="#F7F9FC"/>
+          <line x1="700" y1="1010" x2="770" y2="980" stroke="#F7F9FC" stroke-width="28" stroke-linecap="round"/>
+          <rect x="760" y="930" width="90" height="150" rx="8" fill="#0A46D8"/>
+          <line x1="805" y1="930" x2="805" y2="1080" stroke="#ffffff" stroke-width="3"/>
+        </svg>
+      </div>
+      <div class="assistant-info">
+        <h4>Deskbot</h4>
+        <p>MathDesk Guide Assistant</p>
+      </div>
+      <div class="online-dot"></div>
+    </div>
+    <div class="assistant-messages" id="assistant-messages">
+      <div class="assist-msg">
+        Hi! I'm Deskbot 👋 I can show you how to use MathDesk. What do you need help with?
+      </div>
+    </div>
+    <div class="quick-questions">
+      <button class="quick-q" onclick="assistantQuick('How do I solve a problem?')">How to solve?</button>
+      <button class="quick-q" onclick="assistantQuick('How do I upload a photo?')">Upload photo?</button>
+      <button class="quick-q" onclick="assistantQuick('Is MathDesk free?')">Is it free?</button>
+      <button class="quick-q" onclick="assistantQuick('How do I save my progress?')">Save progress?</button>
+    </div>
+    <div class="assistant-input-row">
+      <input class="assist-input" id="assist-input" placeholder="Ask Deskbot anything..."
+        onkeydown="if(event.key==='Enter')sendAssistant()">
+      <button class="assist-send" onclick="sendAssistant()">➤</button>
+    </div>
+  </div>
+  <button class="assistant-toggle" onclick="toggleAssistant()" title="Chat with Deskbot">
+    <svg width="36" height="36" viewBox="430 670 340 500" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="mascotGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#18B6FF"/>
+          <stop offset="100%" stop-color="#0A46D8"/>
+        </linearGradient>
+      </defs>
+      <rect x="470" y="760" rx="80" ry="80" width="260" height="220" fill="#F7F9FC" stroke="#D9E1F2" stroke-width="4"/>
+      <rect x="505" y="800" rx="40" ry="40" width="190" height="130" fill="#081B46"/>
+      <line x1="600" y1="720" x2="600" y2="760" stroke="#6C7AA0" stroke-width="8"/>
+      <circle cx="600" cy="700" r="18" fill="url(#mascotGrad)"/>
+      <path d="M545 855 Q560 835 575 855" stroke="#18E7FF" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M625 855 Q640 835 655 855" stroke="#18E7FF" stroke-width="8" fill="none" stroke-linecap="round"/>
+      <path d="M565 895 Q600 925 635 895" stroke="#18E7FF" stroke-width="10" fill="none" stroke-linecap="round"/>
+      <rect x="500" y="950" rx="70" ry="70" width="200" height="210" fill="#F7F9FC" stroke="#D9E1F2" stroke-width="4"/>
+      <text x="560" y="1080" font-size="90" font-family="Arial" font-weight="700" fill="#0A46D8">M</text>
+      <line x1="500" y1="1010" x2="430" y2="950" stroke="#F7F9FC" stroke-width="28" stroke-linecap="round"/>
+      <circle cx="415" cy="935" r="20" fill="#F7F9FC"/>
+      <line x1="700" y1="1010" x2="770" y2="980" stroke="#F7F9FC" stroke-width="28" stroke-linecap="round"/>
+      <rect x="760" y="930" width="90" height="150" rx="8" fill="#0A46D8"/>
+      <line x1="805" y1="930" x2="805" y2="1080" stroke="#ffffff" stroke-width="3"/>
+    </svg>
+  </button>
+</div>
+
+<!-- ══ AUTH MODAL ══ -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target === this) closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <h2>Welcome to MathDesk</h2>
+    <p>Login is optional, only needed to save your progress and chat history.</p>
+    <div class="modal-tabs">
+      <button class="modal-tab active" onclick="switchTab(this,'login')">Log In</button>
+      <button class="modal-tab" onclick="switchTab(this,'signup')">Sign Up</button>
+    </div>
+    <div id="tab-login">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" placeholder="you@example.com" id="login-email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" placeholder="••••••••" id="login-password">
+      </div>
+      <button class="modal-submit" onclick="logIn()">Log In</button>
+    </div>
+    <div id="tab-signup" style="display:none">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" placeholder="Your name" id="signup-name">
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" placeholder="you@example.com" id="signup-email">
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" placeholder="Create a password" id="signup-password">
+      </div>
+      <button class="modal-submit" onclick="signUp()">Create Account</button>
+    </div>
+    <div class="modal-note">MathDesk is free. No credit card. No subscription. ❤️</div>
+  </div>
+</div>
+
+<div class="drop-overlay" id="drop-overlay">
+  <div class="drop-overlay-content">
+    📥 Drop your image here
+  </div>
+</div>
+
+<!-- Graph Modal -->
+<div class="modal-overlay" id="graph-modal">
+  <div class="graph-modal-content">
+    <div class="graph-modal-header">
+      <h2>📈 Graphing Calculator</h2>
+      <button class="modal-close" onclick="closeGraph()">✕</button>
+    </div>
+    <iframe id="graph-iframe" src="https://www.geogebra.org/graphing" 
+            width="100%" height="600" frameborder="0" allowfullscreen></iframe>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+// ── TOOLS DATA ──
+const tools = [
+  { name:"Photomath", logo:"https://logo.clearbit.com/photomath.com", emoji:"📷", cat:"solver", free:true, desc:"Scan handwritten or printed math problems with your camera and get instant step-by-step solutions.", url:"https://photomath.com" },
+  { name:"Wolfram Alpha", logo:"https://logo.clearbit.com/wolframalpha.com", emoji:"🧮", cat:"solver", free:true, desc:"The gold standard for computational math. Solves equations, calculus, statistics, and virtually any math problem.", url:"https://wolframalpha.com" },
+  { name:"Desmos", logo:"https://logo.clearbit.com/desmos.com", emoji:"📈", cat:"graphing", free:true, desc:"The best free graphing calculator on the web. Plot functions, inequalities, and create interactive graphs instantly.", url:"https://desmos.com/calculator" },
+  { name:"GeoGebra", logo:"https://logo.clearbit.com/geogebra.org", emoji:"📐", cat:"graphing", free:true, desc:"Geometry, algebra, and graphing combined. Excellent for visualizing geometric proofs and algebraic relationships.", url:"https://geogebra.org" },
+  { name:"Symbolab", logo:"https://logo.clearbit.com/symbolab.com", emoji:"∑", cat:"solver", free:true, desc:"Step-by-step algebra, calculus, trigonometry, and more. Great for checking your work with detailed explanations.", url:"https://symbolab.com" },
+  { name:"Khan Academy", logo:"https://logo.clearbit.com/khanacademy.org", emoji:"🎓", cat:"practice", free:true, desc:"World-class math lessons from basic arithmetic to college calculus. Earn badges as you master topics.", url:"https://khanacademy.org" },
+  { name:"OpenStax", logo:"https://logo.clearbit.com/openstax.org", emoji:"📗", cat:"textbook", free:true, desc:"Free, peer-reviewed textbooks for college math: algebra, calculus, statistics, and more. Legal and open-access.", url:"https://openstax.org" },
+  { name:"LibreTexts Math", logo:"https://logo.clearbit.com/libretexts.org", emoji:"📘", cat:"textbook", free:true, desc:"Open textbooks for every college math course. Search by ISBN-adjacent topics, chapters, and sections.", url:"https://math.libretexts.org" },
+  { name:"Mathway", logo:"https://logo.clearbit.com/mathway.com", emoji:"🔢", cat:"solver", free:true, desc:"Covers basic math through advanced calculus. Enter problems via text or photo and get solutions.", url:"https://mathway.com" },
+  { name:"Paul's Online Notes", logo:"", emoji:"📝", cat:"reference", free:true, desc:"Legendary free math notes covering Algebra, Calculus I/II/III, Differential Equations with worked examples.", url:"https://tutorial.math.lamar.edu" },
+  { name:"Brilliant.org", logo:"https://logo.clearbit.com/brilliant.org", emoji:"💡", cat:"practice", free:false, desc:"Interactive, puzzle-based math and science learning. Strong free tier, premium for full access.", url:"https://brilliant.org" },
+  { name:"3Blue1Brown", logo:"https://logo.clearbit.com/3blue1brown.com", emoji:"🎥", cat:"reference", free:true, desc:"Visual, intuitive video explanations of complex math topics. Best for building deep conceptual understanding.", url:"https://www.3blue1brown.com" },
+  { name:"Integral Calculator", logo:"https://logo.clearbit.com/integral-calculator.com", emoji:"∫", cat:"solver", free:true, desc:"Dedicated tool for computing integrals with full symbolic step-by-step working. Supports definite and indefinite.", url:"https://integral-calculator.com" },
+  { name:"Matrix Calculator", logo:"https://logo.clearbit.com/matrixcalc.org", emoji:"🔲", cat:"solver", free:true, desc:"Comprehensive matrix operations: inverse, determinant, eigenvalues, row reduction, and more.", url:"https://matrixcalc.org" },
+  { name:"Mathplanet", logo:"https://logo.clearbit.com/mathplanet.com", emoji:"🌍", cat:"reference", free:true, desc:"Free, textbook-style explanations of pre-algebra through pre-calculus, organized by course and chapter.", url:"https://mathplanet.com" },
+];
+
+// ── AUTH MODAL ──
+function switchTab(btn, tab) {
+  document.querySelectorAll('.modal-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-login').style.display = (tab === 'login') ? 'block' : 'none';
+  document.getElementById('tab-signup').style.display = (tab === 'signup') ? 'block' : 'none';
+}
+
+function openModal() {
+  document.getElementById('modal-overlay').classList.add('open');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+function renderTools(filter='all') {
+  const grid = document.getElementById('tools-grid');
+  const filtered = filter === 'all' ? tools : tools.filter(t => t.cat === filter);
+  grid.innerHTML = filtered.map(t => {
+    const logoHtml = t.logo
+      ? `<img src="${t.logo}" alt="${t.name}" width="36" height="36"
+           style="object-fit:contain;border-radius:8px;display:block;"
+           onerror="this.replaceWith(Object.assign(document.createElement('span'),{textContent:'${t.emoji}',style:'font-size:1.6rem'}))">`
+      : `<span style="font-size:1.6rem">${t.emoji}</span>`;
+    return `
+    <a class="tool-card" href="${t.url}" target="_blank" rel="noopener noreferrer">
+      <div class="tool-icon" style="background:${iconBg(t.cat)};padding:10px;overflow:hidden;display:flex;align-items:center;justify-content:center;">
+        ${logoHtml}
+      </div>
+      <div class="tool-meta">
+        <span class="tool-tag">${t.cat}</span>
+        ${t.free ? '<span class="tool-free">✓ Free</span>' : '<span class="tool-tag" style="background:#fef3c7;color:#92400e;">Freemium</span>'}
+      </div>
+      <h3>${t.name}</h3>
+      <p>${t.desc}</p>
+      <span class="tool-link">Visit site →</span>
+    </a>`;
+  }).join('');
+}
+
+function iconBg(cat) {
+  const map = { solver:'#dbeafe', graphing:'#d1fae5', textbook:'#fef3c7', reference:'#ede9fe', practice:'#fce7f3' };
+  return map[cat] || '#f0f4ff';
+}
+
+function filterTools(btn, cat) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderTools(cat);
+}
+
+renderTools();
+
+// ── PAGE NAVIGATION ──
+function showPage(id) {
+  // Hide all pages and remove active nav links
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  const map = { home: 0, tools: 1, chat: 2 };
+  document.querySelectorAll('.nav-link')[map[id]]?.classList.add('active');
+  window.scrollTo(0, 0);
+
+  // Show or hide the corner assistant
+  const assistant = document.getElementById('corner-assistant');
+  if (assistant) {
+    assistant.style.display = (id === 'home') ? 'block' : 'none';
+    // Also close the assistant panel if it's open
+    const panel = document.getElementById('assistant-panel');
+    if (panel) panel.classList.remove('open');
+  }
+}
+
+// ── CHAT ──
+let currentMode = 'solve';
+const modeLabels = { solve: '🔍 Solve Mode', learn: '📖 Learn Mode', practice: '✏️ Practice Mode' };
+const modePlaceholders = {
+  solve: 'Type or paste a math problem, or paste an image...',
+  learn: 'Paste your lesson text here, upload or paste an image...',
+  practice: 'Enter a math topic and I\'ll generate practice problems...'
+};
+
+function setMode(btn, mode) {
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentMode = mode;
+  document.getElementById('mode-badge').textContent = modeLabels[mode];
+  document.getElementById('chat-input').placeholder = modePlaceholders[mode];
+}
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 140) + 'px';
+}
+
+function addMessage(role, html) {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `message ${role}`;
+  if (role === 'ai') {
+    div.innerHTML = `<div class="msg-avatar ai" style="background-image:url('Desky.png');background-size:cover;background-position:center;">&nbsp;</div><div><div class="msg-bubble">${html}</div></div>`;
+  } else {
+    div.innerHTML = `<div class="msg-avatar user">👤</div><div class="msg-bubble">${html}</div>`;
+  }
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addTyping() {
+  const msgs = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'message ai'; div.id = 'typing-msg';
+  div.innerHTML = `<div class="msg-avatar ai" style="background-image:url('Desky.png');background-size:cover;background-position:center;">&nbsp;</div><div class="msg-bubble"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div></div>`;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function removeTyping() {
+  const t = document.getElementById('typing-msg');
+  if (t) t.remove();
+}
+
+// N8N WEBHOOK URL
+const N8N_WEBHOOK_URL = 'https://overwilling-janina-unsatisfactorily.ngrok-free.dev/webhook/mathdesk-ai';
+
+function formatReply(text) {
+  // Read TYPE: prefix sent by n8n formatter nodes
+  let type = 'prose';
+  let content = text;
+
+  if (text.startsWith('TYPE:SOLVE\n')) {
+    type = 'solve';
+    content = text.slice('TYPE:SOLVE\n'.length);
+  } else if (text.startsWith('TYPE:EXPLAIN\n')) {
+    type = 'explain';
+    content = text.slice('TYPE:EXPLAIN\n'.length);
+  } else if (text.startsWith('TYPE:PROSE\n')) {
+    type = 'prose';
+    content = text.slice('TYPE:PROSE\n'.length);
+  }
+
+  // Pure prose: no table parsing at all, safe for math notation like P(A|B)
+  if (type === 'prose') {
+    return renderProse(content);
+  }
+
+  // Structured: two-column steps table + bold labels (SOLVE and EXPLAIN)
+  return renderStructured(content);
+}
+
+function renderProse(text) {
+  // Split into paragraph blocks on double newlines
+  const blocks = text.split(/\n{2,}/);
+  let html = '';
+
+  for (const block of blocks) {
+    const trimmed = block.trim();
+    if (!trimmed) continue;
+
+    const lines = trimmed.split('\n');
+
+    // Numbered list block
+    const isNumberedList = lines.length > 1 && lines.every(l => l.match(/^\d+[\.)]/));
+    if (isNumberedList) {
+      html += `<ol style="margin:0 0 16px 0;padding-left:20px;line-height:1.85;">`;
+      for (const l of lines) {
+        const content = l.replace(/^\d+[\.)\s]+/, '').trim();
+        html += `<li style="margin-bottom:5px;font-size:0.95rem;color:var(--gray-800);">${applyInlineFormatting(content)}</li>`;
+      }
+      html += `</ol>`;
+      continue;
+    }
+
+    // Bullet list block
+    const isBulletList = lines.length > 1 && lines.every(l => l.match(/^[-*]\s/));
+    if (isBulletList) {
+      html += `<ul style="margin:0 0 16px 0;padding-left:20px;line-height:1.85;list-style-type:disc;">`;
+      for (const l of lines) {
+        const content = l.replace(/^[-*]\s/, '').trim();
+        html += `<li style="margin-bottom:5px;font-size:0.95rem;color:var(--gray-800);">${applyInlineFormatting(content)}</li>`;
+      }
+      html += `</ul>`;
+      continue;
+    }
+
+    // Regular paragraph — join soft-wrapped lines, apply inline formatting (bold, code)
+    const paragraphText = lines.map(l => applyInlineFormatting(l.trim())).join(' ');
+    html += `<p style="margin:0 0 16px 0;line-height:1.85;font-size:0.95rem;color:var(--gray-800);">${paragraphText}</p>`;
+  }
+
+  return html;
+}
+
+function renderStructured(text) {
+  const lines = text.split('\n');
+  let html = '';
+  let inStepsTable = false;
+  let inPracticeList = false;
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+
+    // ── Steps section header ──
+    if (line.trim() === '**Steps:**') {
+      if (inPracticeList) { inPracticeList = false; }
+      html += `<div style="font-family:'Sora',sans-serif;font-weight:700;color:var(--blue-deep);font-size:0.93rem;margin:14px 0 4px;">Steps</div>`;
+      html += `<table style="width:100%;border-collapse:collapse;margin:0 0 12px;font-size:0.92rem;border-radius:8px;overflow:hidden;">`;
+      inStepsTable = true;
+      continue;
+    }
+
+    // ── Practice section header ──
+    if (line.trim() === '**Practice Problems:**') {
+      if (inStepsTable) { html += '</table>'; inStepsTable = false; }
+      html += `<div style="font-family:'Sora',sans-serif;font-weight:700;color:var(--blue-deep);font-size:0.93rem;margin:14px 0 4px;">Practice Problems</div>`;
+      inPracticeList = true;
+      continue;
+    }
+
+    // ── Inside steps table ──
+    if (inStepsTable) {
+      if (line.trim() === '') {
+        html += '</table>';
+        inStepsTable = false;
+        continue;
+      }
+      if (line.includes('|')) {
+        const parts = line.split('|').map(p => p.trim());
+        const isEven = i % 2 === 0;
+        const rowBg = isEven ? 'background:#f8faff;' : 'background:white;';
+        html += `<tr style="${rowBg}">
+          <td style="padding:9px 14px;border-bottom:1px solid var(--gray-200);vertical-align:top;width:52%;font-family:'Nunito',sans-serif;font-size:0.93rem;color:var(--gray-800);font-weight:600;">${applyInlineFormatting(parts[0] || '')}</td>
+          <td style="padding:9px 14px;border-bottom:1px solid var(--gray-200);vertical-align:top;color:var(--gray-600);font-size:0.88rem;">${parts[1] || ''}</td>
+        </tr>`;
+        continue;
+      }
+      // Non-pipe line closes the table
+      html += '</table>';
+      inStepsTable = false;
+      // fall through to render line normally
+    }
+
+    // ── Inside practice list ──
+    if (inPracticeList) {
+      if (line.trim() === '') {
+        inPracticeList = false;
+        continue;
+      }
+      if (line.match(/^\d+\./)) {
+        html += `<div style="margin:5px 0 5px 4px;font-size:0.92rem;line-height:1.6;">${applyInlineFormatting(line)}</div>`;
+        continue;
+      }
+      inPracticeList = false;
+      // fall through
+    }
+
+    // ── Skip pure separator lines ──
+    if (line.match(/^[-=|]{3,}\s*$/) ) continue;
+
+    // ── Bold label lines: **Answer:** value ──
+    const boldLabel = line.match(/^\*\*(.+?):\*\*\s*(.*)/);
+    if (boldLabel) {
+      const label = boldLabel[1];
+      const rest = boldLabel[2];
+      html += `<div style="margin:10px 0 4px;line-height:1.6;">`;
+      html += `<strong style="color:var(--blue-deep);">${label}:</strong>`;
+      if (rest) html += ` ${applyInlineFormatting(rest)}`;
+      html += `</div>`;
+      continue;
+    }
+
+    // ── Empty line ──
+    if (line.trim() === '') { html += '<br>'; continue; }
+
+    // ── Regular prose line (used in EXPLAIN before steps) ──
+    html += `<div style="margin:3px 0;line-height:1.75;">${applyInlineFormatting(line)}</div>`;
+  }
+
+  if (inStepsTable) html += '</table>';
+  return html;
+}
+
+function applyInlineFormatting(line) {
+  return line
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code style="background:var(--blue-light);padding:2px 6px;border-radius:4px;font-family:\'DM Mono\',monospace;font-size:0.88em;">$1</code>');
+}
+
+async function callN8N(message, mode, extraData = {}) {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 60000);
+  try {
+    let payload = { message, mode, ...extraData };
+    const res = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error('n8n returned HTTP ' + res.status + (errText ? ': ' + errText.slice(0, 200) : '') + '. Check your workflow is active.');
+    }
+    const reply = await res.text();
+    if (!reply || reply.trim() === '') {
+      throw new Error('n8n returned an empty response. The workflow may have errored before the Respond node.');
+    }
+    return reply.trim();
+  } catch (e) {
+    clearTimeout(timeout);
+    if (e.name === 'AbortError') throw new Error('Request timed out after 60 seconds. Try again or check your n8n instance.');
+    throw e;
+  }
+}
+
+async function sendMessage() {
+  const input = document.getElementById('chat-input');
+  const text = input.value.trim();
+  // If there are pending images (added by paste/drop), we send those instead
+  if (window._pendingImages && window._pendingImages.length > 0) {
+    // Show images in chat
+    for (const img of window._pendingImages) {
+      addMessage('user', `<img src="${img.preview}" style="max-width:200px;border-radius:8px;" alt="uploaded image"><br>${text || ''}`);
+    }
+    addTyping();
+    try {
+      const reply = await callN8N(text || 'Solve this problem from the image.', currentMode, {
+        hasImages: true,
+        images: window._pendingImages.map(img => ({ mimeType: img.mimeType, data: img.data }))
+      });
+      removeTyping();
+      addMessage('ai', formatReply(reply));
+      saveChatHistory();   // ✅ ADD THIS LINE
+    } catch(e) {
+      removeTyping();
+      addMessage('ai', `⚠️ ${e.message || 'Could not reach the AI.'}`);
+      console.error('n8n error:', e);
+    }
+    window._pendingImages = [];
+    renderPendingPreviews();
+    input.value = ''; input.style.height = 'auto';
+    return;
+  }
+  if (!text) return;
+  addMessage('user', text.replace(/\n/g,'<br>'));
+  input.value = ''; input.style.height = 'auto';
+  addTyping();
+  try {
+    const reply = await callN8N(text, currentMode);
+    removeTyping();
+    addMessage('ai', formatReply(reply));
+    saveChatHistory();   // ✅ ADD THIS LINE
+  } catch(e) {
+    removeTyping();
+    addMessage('ai', `⚠️ ${e.message || 'Could not reach the AI.'}`);
+    console.error('n8n error:', e);
+  }
+
+}
+
+function quickPrompt(text) {
+  document.getElementById('chat-input').value = text;
+  showPage('chat');
+  setTimeout(sendMessage, 100);
+}
+
+// ── IMAGE HANDLING (paste, drag & drop, file upload) ──
+window._pendingImages = [];
+
+function processImageFile(file) {
+  return new Promise((resolve, reject) => {
+    if (!file.type.startsWith('image/')) {
+      reject(new Error('Only image files are supported'));
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const dataUrl = e.target.result;
+      const parts = dataUrl.split(',');
+      const mime = parts[0].match(/:(.*?);/)[1];
+      const base64 = parts[1];
+      resolve({ mimeType: mime, data: base64, preview: dataUrl });
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+// ── PENDING IMAGE PREVIEW BAR ──
+// Shows inline thumbnail(s) above the input, just like ChatGPT/Claude
+function renderPendingPreviews() {
+  let bar = document.getElementById('pending-preview-bar');
+  if (!bar) {
+    bar = document.createElement('div');
+    bar.id = 'pending-preview-bar';
+    bar.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;padding:8px 12px 0;';
+    const inputArea = document.getElementById('chat-input').parentElement;
+    inputArea.parentElement.insertBefore(bar, inputArea);
+  }
+  bar.innerHTML = '';
+  window._pendingImages.forEach((img, idx) => {
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:relative;display:inline-block;';
+    const thumb = document.createElement('img');
+    thumb.src = img.preview;
+    thumb.style.cssText = 'width:64px;height:64px;object-fit:cover;border-radius:8px;border:2px solid var(--blue-mid,#3b5bdb);display:block;';
+    const btn = document.createElement('button');
+    btn.textContent = '×';
+    btn.title = 'Remove image';
+    btn.style.cssText = 'position:absolute;top:-6px;right:-6px;width:18px;height:18px;border-radius:50%;background:#e63946;color:#fff;border:none;font-size:12px;line-height:18px;text-align:center;cursor:pointer;padding:0;';
+    btn.onclick = function() {
+      window._pendingImages.splice(idx, 1);
+      renderPendingPreviews();
+    };
+    wrap.appendChild(thumb);
+    wrap.appendChild(btn);
+    bar.appendChild(wrap);
+  });
+  if (window._pendingImages.length === 0 && bar.parentElement) {
+    bar.remove();
+  }
+}
+
+function addPendingImage(imgData) {
+  window._pendingImages = window._pendingImages || [];
+  window._pendingImages.push(imgData);
+  renderPendingPreviews();
+  // Focus the textarea so user can type a note
+  document.getElementById('chat-input').focus();
+}
+
+// Ctrl+V / Cmd+V paste anywhere on the page (not just textarea)
+document.addEventListener('paste', async function(e) {
+  const items = (e.clipboardData || window.clipboardData).items;
+  for (const item of items) {
+    if (item.type.indexOf('image') !== -1) {
+      e.preventDefault();
+      const file = item.getAsFile();
+      try {
+        const imgData = await processImageFile(file);
+        addPendingImage(imgData);
+      } catch(err) {
+        console.error('Paste failed:', err);
+      }
+      break; // one image per paste
+    }
+  }
+});
+
+// Drag & drop anywhere on the page
+const dropOverlay = document.getElementById('drop-overlay');
+
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(function(eventName) {
+  document.body.addEventListener(eventName, preventDefaults, false);
+});
+function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+document.body.addEventListener('dragenter', function(e) {
+  if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
+    dropOverlay.classList.add('active');
+  }
+});
+document.body.addEventListener('dragleave', function(e) {
+  // Only hide overlay when leaving the window
+  if (!e.relatedTarget || e.relatedTarget === document.documentElement) {
+    dropOverlay.classList.remove('active');
+  }
+});
+document.body.addEventListener('drop', async function(e) {
+  dropOverlay.classList.remove('active');
+  const files = e.dataTransfer ? e.dataTransfer.files : [];
+  for (const file of files) {
+    if (file.type.startsWith('image/')) {
+      try {
+        const imgData = await processImageFile(file);
+        addPendingImage(imgData);
+      } catch(err) {
+        console.error('Drop failed:', err);
+      }
+    }
+  }
+}, false);
+
+// File upload button (still works, now also shows preview)
+function toggleUpload() { document.getElementById('upload-area').classList.toggle('show'); }
+
+function handleFileUpload(input) {
+  const file = input.files[0];
+  if (!file) return;
+  processImageFile(file).then(function(imgData) {
+    addPendingImage(imgData);
+    document.getElementById('upload-area').classList.remove('show');
+  }).catch(function() {
+    addMessage('ai', 'Could not process the file. Please try a different image.');
+  });
+}
+
+function insertMath() {
+  const panel = document.getElementById('math-symbols-panel');
+  panel.classList.toggle('show');
+}
+
+// Symbol categories
+const symbolBank = {
+  basic: ['+','−','×','÷','=','≠','≈','>','<','≥','≤','±','√','∛','|x|','%','∞'],
+  algebra: ['x²','x³','xⁿ','√(x)','∛(x)','|x|','(a+b)²','(a-b)²','a²-b²','log','ln','eˣ','⌫'],
+  calculus: ['∫','∬','∭','∂','∇','lim','dx','dy','dt','d/dx','∫dx','∑','∏'],
+  greek: ['α','β','γ','Δ','δ','ε','θ','λ','μ','π','σ','Σ','φ','Ω','ω'],
+  sets: ['∈','∉','⊂','⊃','∪','∩','∅','ℕ','ℤ','ℝ','∀','∃','⇒','⇔']
+};
+
+function openGraph() {
+  document.getElementById('graph-modal').classList.add('open');
+}
+function closeGraph() {
+  document.getElementById('graph-modal').classList.remove('open');
+}
+// Close modal when clicking overlay
+document.getElementById('graph-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeGraph();
+});
+
+// Build the grid for a given category
+function showSymbolCategory(cat) {
+  const grid = document.getElementById('symbol-grid');
+  const symbols = symbolBank[cat] || [];
+  grid.innerHTML = '';
+  symbols.forEach(sym => {
+    const btn = document.createElement('button');
+    btn.className = 'symbol-btn';
+    btn.textContent = sym;
+    btn.addEventListener('click', () => {
+      const input = document.getElementById('chat-input');
+      // Insert at cursor position, or append
+      if (document.activeElement === input) {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        const text = input.value;
+        input.value = text.substring(0, start) + sym + text.substring(end);
+        input.setSelectionRange(start + sym.length, start + sym.length);
+      } else {
+        input.value += sym;
+      }
+      input.focus();
+    });
+    grid.appendChild(btn);
+  });
+}
+
+// Category button click handlers
+document.querySelectorAll('.sym-cat-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sym-cat-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    showSymbolCategory(btn.dataset.cat);
+  });
+});
+
+// Initialise with basic category
+showSymbolCategory('basic');
+
+function clearChat() {
+  document.getElementById('chat-messages').innerHTML = '';
+  addMessage('ai', '🧹 Chat cleared! Start fresh with a new problem or topic.');
+}
+
+function toggleSidebar() {
+  const sidebar = document.querySelector('.chat-sidebar');
+  const expandBtn = document.getElementById('sidebar-expand-btn');
+  const chatHeader = document.querySelector('.chat-header');
+
+  sidebar.classList.toggle('collapsed');
+
+  if (sidebar.classList.contains('collapsed')) {
+    expandBtn.style.display = 'block';
+    chatHeader.classList.add('compact');      // enable compact header style
+  } else {
+    expandBtn.style.display = 'none';
+    chatHeader.classList.remove('compact');   // revert to normal header
+  }
+}
+
+// ── ASSISTANT (DESKBOT) ── … (unchanged, abbreviated for brevity) … 
+// [Keep your existing Deskbot functions exactly as they were – I’ll only show the essential ones]
+// ── ASSISTANT (DESKBOT) ──
+const deskbotFAQs = {
+  'How do I solve a problem?': 'Go to the AI Chatbox, choose <strong>🔍 Solve Mode</strong>, then type or paste your math problem. You can also upload a photo! Hit send and I\'ll walk through it step by step.',
+  'How do I upload a photo?': 'In the AI Chatbox, click the <strong>📎 Upload file/photo</strong> button above the input. Select your image and the AI will read and solve the problem in it.',
+  'Is MathDesk free?': 'Yes! MathDesk is completely free to use, no subscription, no hidden fees. We accept donations if you\'d like to support us, but it\'s never required. ❤️',
+  'How do I save my progress?': 'Click <strong>Login / Sign Up</strong> in the top right to create a free account. Once logged in, your chat history and solved problems will be saved automatically.',
+};
+
+function toggleAssistant() {
+  const panel = document.getElementById('assistant-panel');
+  panel.classList.toggle('open');
+}
+
+async function assistantQuick(q) {
+  addAssistMsg(q, 'user');
+  const localAnswer = deskbotFAQs[q];
+  if (localAnswer) {
+    setTimeout(() => addAssistMsg(localAnswer, 'bot'), 400);
+    return;
+  }
+  // Show "thinking" indicator
+  const thinkingDiv = document.createElement('div');
+  thinkingDiv.className = 'assist-msg';
+  thinkingDiv.id = 'deskbot-typing';
+  thinkingDiv.innerHTML = '<em style="opacity:0.5">Deskbot is thinking…</em>';
+  document.getElementById('assistant-messages').appendChild(thinkingDiv);
+  document.getElementById('assistant-messages').scrollTop = 9999;
+  try {
+    const reply = await callN8N(q, 'deskbot');
+    document.getElementById('deskbot-typing')?.remove();
+    addAssistMsg(reply, 'bot');
+  } catch (e) {
+    document.getElementById('deskbot-typing')?.remove();
+    addAssistMsg("I'm having trouble connecting right now. Please try the main chatbox for help!", 'bot');
+  }
+}
+
+async function sendAssistant() {
+  const inp = document.getElementById('assist-input');
+  const text = inp.value.trim();
+  if (!text) return;
+  inp.value = '';
+  await assistantQuick(text);
+}
+
+function addAssistMsg(html, role) {
+  const msgs = document.getElementById('assistant-messages');
+  const div = document.createElement('div');
+  div.className = 'assist-msg' + (role === 'user' ? ' user' : '');
+  div.innerHTML = html;
+  msgs.appendChild(div);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+    
+// ── SCROLL REVEAL ANIMATION ──
+const revealElements = document.querySelectorAll('.reveal, .reveal-group');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) {
+      entry.target.classList.add('visible');
+      // Optional: stop observing once visible
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.15 });
+
+revealElements.forEach(el => observer.observe(el));
+
+  // ── SUPABASE INIT ──
+  const SUPABASE_URL = 'https://hmkngkzmoxltozwnwxfl.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imhta25na3ptb3hsdG96d253eGZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1NzA4NTAsImV4cCI6MjA5MzE0Njg1MH0.UW7Odi9iO6fL9U15O-zUP-MLVjbhbv9T9Y5Gdr-6xAQ';
+  const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  // ── AUTH ──
+  async function signUp() {
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value.trim();
+    if (!email || !password || !name) { alert('All fields required.'); return; }
+    const { data, error } = await supabaseClient.auth.signUp({
+      email,
+      password,
+      options: { data: { name } }
+    });
+    if (error) alert(error.message);
+    else {
+      alert('Signed up successfully! Check your email for confirmation if enabled.');
+      closeModal();
+      updateAuthUI();
+    }
+  }
+
+  async function logIn() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value.trim();
+    if (!email || !password) { alert('Email and password required.'); return; }
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    else {
+      closeModal();
+      updateAuthUI();
+    }
+  }
+
+  async function logOut() {
+    await supabaseClient.auth.signOut();
+    updateAuthUI();
+  }
+
+  async function updateAuthUI() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    const loginBtn = document.querySelector('.nav-btn');
+    const chatSidebar = document.querySelector('.chat-sidebar');
+    if (user) {
+      loginBtn.textContent = `👋 ${user.user_metadata?.name || user.email} (Logout)`;
+      loginBtn.onclick = logOut;
+      loadChatHistory();
+    } else {
+      loginBtn.textContent = 'Login / Sign Up';
+      loginBtn.onclick = openModal;
+      clearChatHistoryList();
+    }
+  }
+
+  // Chat history persistence (requires chat_history table in Supabase)
+  async function saveChatHistory() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+    const msgsContainer = document.getElementById('chat-messages');
+    const allMessages = [];
+    msgsContainer.querySelectorAll('.message').forEach(msg => {
+      const role = msg.classList.contains('user') ? 'user' : 'ai';
+      const bubble = msg.querySelector('.msg-bubble');
+      if (bubble) allMessages.push({ role, content: bubble.innerHTML });
+    });
+    if (allMessages.length === 0) return;
+    await supabaseClient.from('chat_history').upsert({
+    user_id: user.id,
+    messages: allMessages,
+    created_at: new Date().toISOString()
+    }, { onConflict: 'user_id' });
+  }
+
+  async function loadChatHistory() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (!user) return;
+    const { data } = await supabaseClient
+      .from('chat_history')
+      .select('messages')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .single();
+    if (!data || !data.messages) return;
+    document.getElementById('chat-messages').innerHTML = '';
+    data.messages.forEach(msg => addMessage(msg.role, msg.content));
+  }
+
+  function clearChatHistoryList() {
+    // You can clear the static example items here if desired
+    const historyDiv = document.querySelector('.sidebar-history');
+    if (historyDiv) {
+      historyDiv.innerHTML = '<h4>Recent Chats</h4><p style="font-size:0.8rem;color:var(--gray-600);padding:10px;">Log in to see your saved chats.</p>';
+    }
+  }
+
+  // listen to auth state changes
+  supabaseClient.auth.onAuthStateChange((event, session) => {
+    updateAuthUI();
+  });
+
+  // initial UI update
+  updateAuthUI();
+
+
+// ══════════════════════════════════════════════
+// MATHDESK CALCULATOR ENGINE
+// ══════════════════════════════════════════════
+
+// ── KEYBOARD DATA BY TOPIC ──
+const calcTopicKeyboards = {
+  basic: {
+    tabs: ['Numbers', 'Operations', 'Symbols'],
+    Numbers:    ['7','8','9','4','5','6','1','2','3','0','.','(',')','^'],
+    Operations: ['+','-','×','÷','=','%','√','|x|','±'],
+    Symbols:    ['<','>','≤','≥','≠','≈','∞']
+  },
+  prealgebra: {
+    tabs: ['Numbers', 'Algebra', 'Symbols'],
+    Numbers:    ['7','8','9','4','5','6','1','2','3','0','.','(',')','^'],
+    Algebra:    ['x','y','√','x²','x³','|x|','+','-','×','÷','='],
+    Symbols:    ['<','>','≤','≥','≠','≈','∞','%']
+  },
+  algebra: {
+    tabs: ['Basic', 'Functions', 'Advanced'],
+    Basic:      ['x','y','z','+','-','×','÷','=','(',')','^','√','7','8','9','4','5','6','1','2','3','0','.'],
+    Functions:  ['f(x)','log','ln','eˣ','x²','x³','xⁿ','√(x)','∛(x)','|x|','log₂','log₁₀'],
+    Advanced:   ['∈','∉','∩','∪','∅','⊂','⊃','∀','∃','⇒','⇔']
+  },
+  trig: {
+    tabs: ['Basic', 'Trig', 'Inverse'],
+    Basic:      ['x','θ','+','-','×','÷','=','(',')','^','7','8','9','4','5','6','1','2','3','0','.'],
+    Trig:       ['sin','cos','tan','cot','sec','csc','π','rad','°'],
+    Inverse:    ['arcsin','arccos','arctan','arccot','arcsec','arccsc','sinh','cosh','tanh']
+  },
+  precalc: {
+    tabs: ['Basic', 'Functions', 'Trig'],
+    Basic:      ['x','y','+','-','×','÷','=','(',')','^','7','8','9','4','5','6','1','2','3','0','.'],
+    Functions:  ['f(x)','g(x)','log','ln','eˣ','√','x²','∞','lim','→'],
+    Trig:       ['sin','cos','tan','π','arcsin','arccos','arctan','°']
+  },
+  calculus: {
+    tabs: ['Basic', 'Calculus', 'Advanced'],
+    Basic:      ['x','y','+','-','×','÷','=','(',')','^','7','8','9','4','5','6','1','2','3','0','.'],
+    Calculus:   ['∫','∬','d/dx','∂/∂x','lim','dx','dy','dt','∑','∏','∞','→'],
+    Advanced:   ['∇','Δ','∂','∮','∯','eˣ','ln','log','√','xⁿ']
+  },
+  stats: {
+    tabs: ['Basic', 'Stats', 'Probability'],
+    Basic:      ['x','y','+','-','×','÷','=','(',')','^','7','8','9','4','5','6','1','2','3','0','.'],
+    Stats:      ['μ','σ','x̄','σ²','Σ','n','P(x)','E(x)','√','!'],
+    Probability:['P','C','nPr','nCr','!','∩','∪','∅','|','~']
+  },
+  finitemath: {
+    tabs: ['Basic', 'Sets', 'Combinatorics'],
+    Basic:      ['x','y','+','-','×','÷','=','(',')','^','7','8','9','4','5','6','1','2','3','0','.'],
+    Sets:       ['∈','∉','⊂','⊃','∩','∪','∅','∁','×','|A|'],
+    Combinatorics:['nPr','nCr','!','∑','n','k','P','C','2ⁿ']
+  },
+  linalg: {
+    tabs: ['Basic', 'Vectors', 'Matrices'],
+    Basic:      ['x','y','z','+','-','×','÷','=','(',')','^','7','8','9','4','5','6','1','2','3','0','.'],
+    Vectors:    ['v⃗','u⃗','·','×','|v|','∇','∂','i','j','k'],
+    Matrices:   ['[A]','det','tr','Aᵀ','A⁻¹','I','∈ℝ','rank','λ','∑']
+  }
+};
+
+// ── STATE ──
+let calcInput = '';
+let calcTopic = 'basic';
+let calcActiveTab = 'Numbers';
+let calcSendToChat = false;
+let calcTopicBarOpen = true;
+
+// chat toolbar calc state
+let chatCalcTopic = 'basic';
+let chatCalcActiveTab = 'Numbers';
+
+// ── SIDEBAR CALCULATOR ──
+function toggleSidebarCalculator() {
+  const win = document.getElementById('sidebar-calc-window');
+  const btn = document.getElementById('mode-calculator');
+  if (win.classList.contains('open')) {
+    closeSidebarCalculator();
+  } else {
+    win.classList.add('open');
+    btn.classList.add('active');
+    renderCalcKeyboard();
+    updateCalcScreen();
+  }
+}
+
+function closeSidebarCalculator() {
+  document.getElementById('sidebar-calc-window').classList.remove('open');
+  document.getElementById('sidebar-calc-answer').classList.remove('open');
+  document.getElementById('mode-calculator').classList.remove('active');
+}
+
+function closeCalcAnswer() {
+  document.getElementById('sidebar-calc-answer').classList.remove('open');
+}
+
+function toggleCalcTopicBar() {
+  const bar = document.getElementById('calc-topic-bar');
+  bar.classList.toggle('collapsed');
+  calcTopicBarOpen = !calcTopicBarOpen;
+}
+
+function selectCalcTopic(btn) {
+  document.querySelectorAll('.calc-topic-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  calcTopic = btn.dataset.topic;
+  calcActiveTab = calcTopicKeyboards[calcTopic].tabs[0];
+  renderCalcKeyboard();
+}
+
+function renderCalcKeyboard() {
+  const kb = calcTopicKeyboards[calcTopic];
+  const tabsEl = document.getElementById('calc-key-tabs');
+  const gridEl = document.getElementById('calc-key-grid');
+
+  // Tabs
+  tabsEl.innerHTML = '';
+  kb.tabs.forEach(tab => {
+    const btn = document.createElement('button');
+    btn.className = 'calc-key-tab' + (tab === calcActiveTab ? ' active' : '');
+    btn.textContent = tab;
+    btn.onclick = () => { calcActiveTab = tab; renderCalcKeyboard(); };
+    tabsEl.appendChild(btn);
+  });
+
+  // Keys
+  const symbols = kb[calcActiveTab] || [];
+  gridEl.innerHTML = '';
+
+  // Action row: C, backspace, Graph, Solve
+  const actions = [
+    { label: 'C', cls: 'clear', action: () => { calcInput = ''; updateCalcScreen(); } },
+    { label: '⌫', cls: 'backspace', action: () => { calcInput = calcInput.slice(0, -1); updateCalcScreen(); } },
+    { label: '📈 Graph', cls: 'graph-key action', action: () => openGraph() },
+    { label: '▶ Solve', cls: 'solve-key', action: () => solveSidebarCalc() }
+  ];
+  actions.forEach(a => {
+    const btn = document.createElement('button');
+    btn.className = 'calc-key ' + a.cls;
+    btn.textContent = a.label;
+    btn.onclick = a.action;
+    gridEl.appendChild(btn);
+  });
+
+  // Symbol keys
+  symbols.forEach(sym => {
+    const btn = document.createElement('button');
+    btn.className = 'calc-key' + (/[+×÷=^-]/.test(sym) ? ' operator' : '');
+    btn.textContent = sym;
+    btn.onclick = () => { calcInput += sym; updateCalcScreen(); };
+    gridEl.appendChild(btn);
+  });
+}
+
+function updateCalcScreen() {
+  const main = document.getElementById('calc-main');
+  const expr = document.getElementById('calc-expr');
+  if (calcInput === '') {
+    main.innerHTML = '0<span class="calc-screen-cursor"></span>';
+    expr.textContent = '';
+  } else {
+    main.innerHTML = calcInput + '<span class="calc-screen-cursor"></span>';
+    expr.textContent = '';
+  }
+}
+
+async function solveSidebarCalc() {
+  if (!calcInput.trim()) return;
+  const problem = calcInput;
+
+  // Show answer panel
+  const answerPanel = document.getElementById('sidebar-calc-answer');
+  const answerBody = document.getElementById('calc-answer-body');
+  answerPanel.classList.add('open');
+  answerBody.innerHTML = '<div class="loading"><div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div> Solving...</div>';
+
+  try {
+    const reply = await callN8N(problem, 'solve');
+    const formatted = formatReply(reply);
+    answerBody.innerHTML = formatted;
+    answerBody.className = 'calc-answer-body';
+
+    // Optionally also send to main chat
+    if (calcSendToChat) {
+      addMessage('user', problem.replace(/\n/g, '<br>'));
+      addMessage('ai', formatted);
+    }
+  } catch(e) {
+    answerBody.innerHTML = '<span style="color:#ef4444;">Error: ' + (e.message || 'Could not reach AI.') + '</span>';
+    answerBody.className = 'calc-answer-body';
+  }
+}
+
+function toggleCalcSendToChat() {
+  calcSendToChat = !calcSendToChat;
+  const toggle = document.getElementById('calc-send-toggle');
+  toggle.classList.toggle('on', calcSendToChat);
+}
+
+// ── DRAG TO MOVE sidebar calc window ──
+(function() {
+  let isDragging = false, startX, startY, origLeft, origTop;
+  document.addEventListener('DOMContentLoaded', function() {
+    const handle = document.getElementById('calc-drag-handle');
+    const win = document.getElementById('sidebar-calc-window');
+    if (!handle || !win) return;
+    handle.addEventListener('mousedown', function(e) {
+      isDragging = true;
+      startX = e.clientX; startY = e.clientY;
+      const rect = win.getBoundingClientRect();
+      origLeft = rect.left; origTop = rect.top;
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      win.style.left = Math.max(0, origLeft + dx) + 'px';
+      win.style.top = Math.max(64, origTop + dy) + 'px';
+      // Move answer panel with it
+      const ans = document.getElementById('sidebar-calc-answer');
+      if (ans.classList.contains('open')) {
+        ans.style.left = (Math.max(0, origLeft + dx) + 328) + 'px';
+        ans.style.top = Math.max(64, origTop + dy) + 'px';
+      }
+    });
+    document.addEventListener('mouseup', function() { isDragging = false; });
+  });
+})();
+
+// ── CHAT TOOLBAR CALCULATOR ──
+const chatCalcTopicKeyboards = calcTopicKeyboards; // same data
+
+function toggleChatCalculator() {
+  const panel = document.getElementById('chat-calc-panel');
+  panel.classList.toggle('show');
+  if (panel.classList.contains('show')) {
+    renderChatCalcKeyboard();
+  }
+  // Close math symbols panel if open
+  document.getElementById('math-symbols-panel').classList.remove('show');
+}
+
+function chatCalcTopicChange() {
+  chatCalcTopic = document.getElementById('chat-calc-topic').value;
+  chatCalcActiveTab = chatCalcTopicKeyboards[chatCalcTopic].tabs[0];
+  renderChatCalcKeyboard();
+}
+
+function renderChatCalcKeyboard() {
+  const kb = chatCalcTopicKeyboards[chatCalcTopic];
+  const tabsEl = document.getElementById('chat-calc-tabs');
+  const keysEl = document.getElementById('chat-calc-keys');
+
+  // Tabs
+  tabsEl.innerHTML = '';
+  kb.tabs.forEach(tab => {
+    const btn = document.createElement('button');
+    btn.className = 'chat-calc-key-tab' + (tab === chatCalcActiveTab ? ' active' : '');
+    btn.textContent = tab;
+    btn.onclick = () => { chatCalcActiveTab = tab; renderChatCalcKeyboard(); };
+    tabsEl.appendChild(btn);
+  });
+
+  // Keys
+  const symbols = kb[chatCalcActiveTab] || [];
+  keysEl.innerHTML = '';
+  symbols.forEach(sym => {
+    const btn = document.createElement('button');
+    btn.className = 'chat-calc-key' + (/[+×÷=^-]/.test(sym) ? ' op' : '');
+    btn.textContent = sym;
+    btn.onclick = () => {
+      const input = document.getElementById('chat-input');
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      const text = input.value;
+      input.value = text.substring(0, start) + sym + text.substring(end);
+      input.setSelectionRange(start + sym.length, start + sym.length);
+      input.focus();
+      autoResize(input);
+    };
+    keysEl.appendChild(btn);
+  });
+}
+
+// ── KEYBOARD SUPPORT FOR SIDEBAR CALCULATOR ──
+document.addEventListener('keydown', function(e) {
+  const calcWin = document.getElementById('sidebar-calc-window');
+  if (!calcWin.classList.contains('open')) return;                      // only when calc is visible
+  if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return; // don’t steal focus from inputs
+
+  const key = e.key;
+  if (key >= '0' && key <= '9') { e.preventDefault(); calcInput += key; }
+  else if (key === '.')         { e.preventDefault(); calcInput += '.'; }
+  else if (key === '+' || key === '-') { e.preventDefault(); calcInput += key; }
+  else if (key === '*')         { e.preventDefault(); calcInput += '×'; }
+  else if (key === '/')         { e.preventDefault(); calcInput += '÷'; }
+  else if (key === '^')         { e.preventDefault(); calcInput += '^'; }
+  else if (key === '(' || key === ')') { e.preventDefault(); calcInput += key; }
+  else if (key === 'Backspace') { e.preventDefault(); calcInput = calcInput.slice(0, -1); }
+  else if (key === 'Enter')     { e.preventDefault(); solveSidebarCalc(); return; }
+  else if (key === 'Escape')    { e.preventDefault(); closeSidebarCalculator(); return; }
+  else { return; }  // ignore other keys
+  updateCalcScreen();
+});
+
+// ── AUTH MODAL ── … (unchanged) …
+// ── SCROLL REVEAL ── … (unchanged) …
+</script>
+
+<!-- ══ SIDEBAR FLOATING CALCULATOR ══ -->
+<div id="sidebar-calc-window">
+  <div class="calc-window-header" id="calc-drag-handle">
+    <div class="calc-window-title">🧮 MathDesk Calculator</div>
+    <div class="calc-window-controls">
+      <button class="calc-ctrl-btn minimize" onclick="toggleCalcTopicBar()" title="Toggle subject panel">—</button>
+      <button class="calc-ctrl-btn close-btn" onclick="closeSidebarCalculator()" title="Close">✕</button>
+    </div>
+  </div>
+  <!-- Topic selector -->
+  <div class="calc-topic-bar" id="calc-topic-bar">
+    <button class="calc-topic-toggle" onclick="toggleCalcTopicBar()">
+      Subject
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+    </button>
+    <div class="calc-topic-scroll" id="calc-topic-scroll">
+      <button class="calc-topic-btn active" data-topic="basic" onclick="selectCalcTopic(this)">Basic Math</button>
+      <button class="calc-topic-btn" data-topic="prealgebra" onclick="selectCalcTopic(this)">Pre-Algebra</button>
+      <button class="calc-topic-btn" data-topic="algebra" onclick="selectCalcTopic(this)">Algebra</button>
+      <button class="calc-topic-btn" data-topic="trig" onclick="selectCalcTopic(this)">Trigonometry</button>
+      <button class="calc-topic-btn" data-topic="precalc" onclick="selectCalcTopic(this)">Precalculus</button>
+      <button class="calc-topic-btn" data-topic="calculus" onclick="selectCalcTopic(this)">Calculus</button>
+      <button class="calc-topic-btn" data-topic="stats" onclick="selectCalcTopic(this)">Statistics</button>
+      <button class="calc-topic-btn" data-topic="finitemath" onclick="selectCalcTopic(this)">Finite Math</button>
+      <button class="calc-topic-btn" data-topic="linalg" onclick="selectCalcTopic(this)">Linear Algebra</button>
+    </div>
+  </div>
+  <!-- Screen -->
+  <div class="calc-screen">
+    <div class="calc-screen-expr" id="calc-expr"></div>
+    <div class="calc-screen-main" id="calc-main">0<span class="calc-screen-cursor"></span></div>
+  </div>
+  <!-- Keyboard tabs + grid -->
+  <div class="calc-keyboard">
+    <div class="calc-key-tabs" id="calc-key-tabs"></div>
+    <div class="calc-key-grid" id="calc-key-grid"></div>
+  </div>
+  <!-- Send to chat toggle -->
+  <div class="calc-chat-toggle">
+    <label>
+      <div class="toggle-switch" id="calc-send-toggle" onclick="toggleCalcSendToChat()"></div>
+      Also send to chat window
+    </label>
+  </div>
+</div>
+
+<!-- ══ CALCULATOR ANSWER PANEL ══ -->
+<div id="sidebar-calc-answer">
+  <div class="calc-answer-header">
+    <h4>📊 Solution</h4>
+    <button class="calc-answer-close" onclick="closeCalcAnswer()">✕ Close</button>
+  </div>
+  <div class="calc-answer-body" id="calc-answer-body">
+    Enter a problem and press Solve to see the solution here.
+  </div>
+</div>
+
+</body>
+</html>
