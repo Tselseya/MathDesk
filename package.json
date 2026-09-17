@@ -1,7 +1,7 @@
 {
   "name": "mathdesk-redesign",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
   "scripts": {
     "dev": "vite --host 0.0.0.0",
@@ -10,6 +10,7 @@
     "check": "tsc --noEmit"
   },
   "dependencies": {
+    "@supabase/supabase-js": "latest",
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest"
