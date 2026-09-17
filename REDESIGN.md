@@ -48,4 +48,12 @@ npm run check
 npm run build
 ```
 
-Phase 1 intentionally contains only a foundation shell and adapter proof. Existing product features will be reconnected incrementally in later phases.
+## Phase 4 capabilities
+
+The redesign now includes a camera capture modal with permission/error fallback, camera switching, capture preview, retake, and upload-to-chat behavior. Camera tracks are stopped when the modal closes or unmounts.
+
+The app shell is installable as a PWA. `public/sw.js` caches the local app shell and same-origin static assets. AI requests remain online-only; the offline shell does not pretend to provide local AI.
+
+Chat drafts are stored under `mathdesk:draft:main` in browser storage and cleared only after a successful send attempt is accepted into the local conversation. The chat shows online/offline status and prevents new AI requests while offline.
+
+The Motion toggle persists under `mathdesk:reduce-motion` and applies an explicit reduced-motion mode in addition to the system `prefers-reduced-motion` media query.
