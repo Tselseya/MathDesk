@@ -57,3 +57,11 @@ The app shell is installable as a PWA. `public/sw.js` caches the local app shell
 Chat drafts are stored under `mathdesk:draft:main` in browser storage and cleared only after a successful send attempt is accepted into the local conversation. The chat shows online/offline status and prevents new AI requests while offline.
 
 The Motion toggle persists under `mathdesk:reduce-motion` and applies an explicit reduced-motion mode in addition to the system `prefers-reduced-motion` media query.
+
+## Phase 5 capabilities
+
+Authentication remains optional for guests, while authenticated users receive session-aware loading of chat history. The active workspace refreshes its cloud history when a user signs in without requiring a page reload.
+
+Saved lessons use a local-first model. Lessons are available immediately in browser storage and are synchronized to Supabase when an authenticated session and network connection are available. The library supports creating, listing, and deleting lessons and clearly distinguishes device-local records from cloud-synced records.
+
+The SQL required for the cloud layer is stored in `supabase/migrations/20260918_phase5_cloud_sync.sql`. The configured MathDesk Supabase project was inactive during Phase 5 implementation, so the migration was not applied remotely; resume the project and apply this migration before expecting cross-device sync.
