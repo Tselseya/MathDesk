@@ -1,19 +1,17 @@
 -- MathDesk Phase 5: cloud-synced chat history and saved lessons.
--- Apply in the MathDesk Supabase project after resuming the inactive project.
+-- Safe for the pre-existing chat_history table used by the legacy app.
 
 create table if not exists public.chat_history (
-  user_id uuid primary key references auth.users(id) on delete cascade,
+  id bigint generated always as identity primary key,
+  user_id uuid unique not null references auth.users(id) on delete cascade,
   messages jsonb not null default '[]'::jsonb,
-  created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  created_at timestamptz not null default now()
 );
 
+alter table public.chat_history add column if not exists updated_at timestamptz not null default now();
 alter table public.chat_history enable row level security;
 drop policy if exists "Users can manage their own chat history" on public.chat_history;
-create policy "Users can manage their own chat history"
-on public.chat_history for all
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+create policy "Users can manage their own chat history" on public.chat_history for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create table if not exists public.saved_lessons (
   id uuid primary key default gen_random_uuid(),
@@ -28,20 +26,10 @@ create table if not exists public.saved_lessons (
 create index if not exists saved_lessons_user_updated_idx on public.saved_lessons(user_id, updated_at desc);
 alter table public.saved_lessons enable row level security;
 drop policy if exists "Users can manage their own saved lessons" on public.saved_lessons;
-create policy "Users can manage their own saved lessons"
-on public.saved_lessons for all
-using (auth.uid() = user_id)
-with check (auth.uid() = user_id);
+create policy "Users can manage their own saved lessons" on public.saved_lessons for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 create or replace function public.set_updated_at()
-returns trigger
-language plpgsql
-as $$
-begin
-  new.updated_at = now();
-  return new;
-end;
-$$;
+returns trigger language plpgsql as $$ begin new.updated_at = now(); return new; end; $$;
 
 drop trigger if exists chat_history_set_updated_at on public.chat_history;
 create trigger chat_history_set_updated_at before update on public.chat_history for each row execute function public.set_updated_at();

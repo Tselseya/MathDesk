@@ -64,4 +64,10 @@ Authentication remains optional for guests, while authenticated users receive se
 
 Saved lessons use a local-first model. Lessons are available immediately in browser storage and are synchronized to Supabase when an authenticated session and network connection are available. The library supports creating, listing, and deleting lessons and clearly distinguishes device-local records from cloud-synced records.
 
-The SQL required for the cloud layer is stored in `supabase/migrations/20260918_phase5_cloud_sync.sql`. The configured MathDesk Supabase project was inactive during Phase 5 implementation, so the migration was not applied remotely; resume the project and apply this migration before expecting cross-device sync.
+The SQL required for the cloud layer is stored in `supabase/migrations/20260918_phase5_cloud_sync.sql`. It is additive and compatible with the legacy `chat_history` table, including its identity key and existing unique `user_id` constraint.
+
+## Phase 6 readiness
+
+The Supabase migration has been applied to the healthy MathDesk project and both `chat_history` and `saved_lessons` have row-level security enabled. The pre-existing chat table was detected and preserved; the compatibility update is recorded in `supabase/migrations/20260919_phase6_chat_history_compat.sql`. The production bundle builds successfully and the local preview serves the app shell, manifest, and service worker. The main JavaScript bundle is approximately 273 KB raw / 86 KB gzip, while the redesign no longer ships the former 1.9 MB embedded-PNG favicon.
+
+The branch is ready for review, but merging should still be followed by a staging smoke test against the deployed n8n endpoint, Supabase authentication, chat-history save/load, saved lessons, camera permission flow, and PWA install behavior.
