@@ -20,6 +20,12 @@ Upload the **contents of `dist/`**, not the `dist` directory itself, into the pu
 
 After upload, verify the root page, `/site.webmanifest`, `/sw.js`, Supabase login, chat-history sync, saved lessons, and an AI request. Camera capture requires HTTPS and a user gesture; the custom domain must remain HTTPS for camera access and PWA installation.
 
+## GitHub Pages deployment
+
+The repository now includes `.github/workflows/deploy-pages.yml`. Every push to `main` builds the React application and deploys the generated `dist/` artifact through GitHub Pages. This is the required path for the current `app.mathdesk.page.gd` custom-domain deployment; uploading source files directly to the Pages root will produce a blank page because the compiled `assets/` directory is missing.
+
+In the repository settings, add the following Actions secrets before relying on cloud functionality: `VITE_N8N_WEBHOOK_URL`, `VITE_MATHDESK_API_URL` when a hosted gateway exists, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY`. The workflow can build with empty optional values, but AI and Supabase features will remain unavailable until their secrets are configured.
+
 ## Production environment values
 
 Use `.env.production.example` as the template. The preferred future setup is `VITE_MATHDESK_API_URL` pointing to a stable hosted API gateway. Until that exists, set `VITE_N8N_WEBHOOK_URL` to the production n8n webhook. Never expose n8n credentials in frontend variables; the endpoint itself is visible to browser users and should be protected by the workflow or a server-side gateway.
