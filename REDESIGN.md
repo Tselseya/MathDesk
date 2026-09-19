@@ -71,3 +71,9 @@ The SQL required for the cloud layer is stored in `supabase/migrations/20260918_
 The Supabase migration has been applied to the healthy MathDesk project and both `chat_history` and `saved_lessons` have row-level security enabled. The pre-existing chat table was detected and preserved; the compatibility update is recorded in `supabase/migrations/20260919_phase6_chat_history_compat.sql`. The production bundle builds successfully and the local preview serves the app shell, manifest, and service worker. The main JavaScript bundle is approximately 273 KB raw / 86 KB gzip, while the redesign no longer ships the former 1.9 MB embedded-PNG favicon.
 
 The branch is ready for review, but merging should still be followed by a staging smoke test against the deployed n8n endpoint, Supabase authentication, chat-history save/load, saved lessons, camera permission flow, and PWA install behavior.
+
+## Interface restoration and motion layer
+
+The AI workspace now restores the former MathDesk interaction model: a persistent left assistant sidebar, Solve/Learn/Practice/Calculator modes, recent-chat shortcuts, a conversation tab, upload strip, plus-tool menu, camera action, familiar composer, and saved-lessons access. The current React service adapters remain underneath this visual layer, so n8n requests, Supabase history, drafts, uploads, camera capture, handwriting, graphing, calculator handoff, and lesson sync are preserved.
+
+The homepage and workspace use restrained motion inspired by the BrewedOps portfolio: staged entrance transitions, scroll-triggered feature reveals, a slow math-symbol drift, a small marquee strip, orbiting empty-state symbols, active online indicators, lift-on-hover cards, and animated message/tool entry. Motion is disabled or reduced through the existing reduced-motion setting and the system `prefers-reduced-motion` preference. The animation layer intentionally avoids continuous movement inside instructional text or message content.
