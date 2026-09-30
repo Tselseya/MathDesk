@@ -121,3 +121,21 @@ html[data-motion="reduced"] *, html[data-motion="reduced"] *::before, html[data-
 @media (prefers-reduced-motion: reduce) { .shell::before, .marquee-track, .tools-directory::before, .legacy-empty-orbit span, .legacy-online-badge span { animation: none !important; }.workspace-card:hover, .directory-card:hover, .feature-card:hover { transform: none; }.reveal-on-scroll { opacity: 1; transform: none; } }
 html[data-motion="reduced"] .shell::before, html[data-motion="reduced"] .marquee-track, html[data-motion="reduced"] .tools-directory::before, html[data-motion="reduced"] .legacy-empty-orbit span, html[data-motion="reduced"] .legacy-online-badge span { animation: none !important; }
 html[data-motion="reduced"] .workspace-card:hover, html[data-motion="reduced"] .directory-card:hover, html[data-motion="reduced"] .feature-card:hover { transform: none; }
+
+/* MathDesk sign-in dialog and resource icons */
+.auth-overlay { z-index: 10000; display: flex; align-items: center; justify-content: center; overflow-y: auto; min-height: 100dvh; padding: 16px; }
+.auth-card { flex: 0 1 410px; box-sizing: border-box; max-height: calc(100dvh - 32px); margin: auto; overflow-y: auto; overscroll-behavior: contain; }
+.auth-card form { margin: 0; }
+.auth-label { display: block; margin-top: 13px; color: var(--ink); font-size: .78rem; font-weight: 700; }
+.auth-label input { box-sizing: border-box; margin: 6px 0 0; font-weight: 400; }
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0 12px; color: var(--muted); font-size: .74rem; }
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+.auth-google { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 10px; color: var(--ink); background: #fff; cursor: pointer; font-weight: 700; }
+.auth-google:hover:not(:disabled) { border-color: var(--blue); background: #f3f7ff; }
+.auth-google:disabled { opacity: .58; cursor: not-allowed; }
+.auth-google-mark { display: grid; place-items: center; width: 20px; height: 20px; color: #4285f4; font-size: 1.1rem; font-weight: 900; }
+.auth-provider-note { margin: 9px 0 0; color: var(--muted); font-size: .74rem; line-height: 1.5; text-align: center; }
+.auth-inline-notice { color: #a33b4c; font-size: .75rem; }
+.tool-emoji img { display: block; width: 26px; height: 26px; object-fit: contain; }
+.tool-emoji svg { color: var(--blue); }
+@media (max-width: 520px) { .auth-overlay { padding: 12px; } .auth-card { width: 100%; max-height: calc(100dvh - 24px); padding: 22px 18px; border-radius: 18px; } }
