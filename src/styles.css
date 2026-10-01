@@ -139,3 +139,13 @@ html[data-motion="reduced"] .workspace-card:hover, html[data-motion="reduced"] .
 .tool-emoji img { display: block; width: 26px; height: 26px; object-fit: contain; }
 .tool-emoji svg { color: var(--blue); }
 @media (max-width: 520px) { .auth-overlay { padding: 12px; } .auth-card { width: 100%; max-height: calc(100dvh - 24px); padding: 22px 18px; border-radius: 18px; } }
+
+/* Compact hosted-client resources and visible account state */
+.tools-directory { max-width: 1100px; padding: 48px 24px 64px; }
+.tool-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.directory-card { min-height: 0; padding: 17px; }
+.tool-emoji svg { color: var(--blue); }
+.auth-session { display: inline-block; max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--ink); font-size: .75rem; font-weight: 700; }
+.auth-session.compact { max-width: 125px; }
+@media (max-width: 760px) { .tools-directory { padding: 42px 14px 54px; } .tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .auth-session { max-width: 112px; } }
+@media (max-width: 520px) { .tool-grid { grid-template-columns: 1fr; } .directory-card { min-height: 0; } .auth-session { max-width: 85px; } .auth-session.compact { display: none; } }

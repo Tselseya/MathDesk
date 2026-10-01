@@ -114,9 +114,10 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     } finally { setBusy(false); }
   }
 
-  if (userLabel) return <><button className="auth-button signed-in" onClick={logout} disabled={busy}>
-    <LogOut size={15} /> {compact ? 'Log out' : `${userLabel} · Log out`}
-  </button>{notice && <span className="auth-inline-notice" role="alert">{notice}</span>}</>;
+  if (userLabel) return <><span className={`auth-session${compact ? ' compact' : ''}`} title={userLabel} role="status">Signed in as {userLabel}</span>
+    <button type="button" className="auth-button signed-in" onClick={logout} disabled={busy} aria-label="Sign out of MathDesk">
+      <LogOut size={15} /> {busy ? 'Signing out…' : 'Sign out'}
+    </button>{notice && <span className="auth-inline-notice" role="alert">{notice}</span>}</>;
 
   const dialog = open ? <div className="auth-overlay" role="presentation" onMouseDown={(event) => {
     if (event.target === event.currentTarget) setOpen(false);

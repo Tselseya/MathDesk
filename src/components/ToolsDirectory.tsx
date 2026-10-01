@@ -1,17 +1,39 @@
-import { BookOpen, Calculator, Camera, ExternalLink, Filter, GraduationCap, LineChart, Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { BookOpen, ExternalLink, Filter, GraduationCap, LineChart, NotebookPen, Search, Shapes, Sigma } from 'lucide-react';
 
 const tools = [
-  ['Photomath','solver',true,'Scan handwritten or printed problems with a camera.','https://photomath.com','📷'], ['Wolfram Alpha','solver',true,'Computational math for equations, calculus, statistics, and more.','https://wolframalpha.com','🧮'], ['Desmos','graphing',true,'Plot functions, inequalities, and interactive graphs.','https://desmos.com/calculator','📈'], ['GeoGebra','graphing',true,'Geometry, algebra, and graphing in one visual workspace.','https://geogebra.org','📐'], ['Symbolab','solver',true,'Step-by-step algebra, calculus, and trigonometry.','https://symbolab.com','∑'], ['Khan Academy','practice',true,'Lessons from arithmetic through college calculus.','https://khanacademy.org','🎓'], ['OpenStax','textbook',true,'Free, peer-reviewed college mathematics textbooks.','https://openstax.org','📗'], ['LibreTexts Math','textbook',true,'Open textbooks for college math courses.','https://math.libretexts.org','📘'], ['Mathway','solver',true,'Problem solving from basic math through calculus.','https://mathway.com','🔢'], ["Paul's Online Notes",'reference',true,'Worked notes for algebra, calculus, and differential equations.','https://tutorial.math.lamar.edu','📝'], ['Brilliant.org','practice',false,'Interactive puzzle-based math learning.','https://brilliant.org','💡'], ['3Blue1Brown','reference',true,'Visual explanations for deep conceptual understanding.','https://www.3blue1brown.com','🎥'], ['Integral Calculator','solver',true,'Symbolic definite and indefinite integral calculations.','https://integral-calculator.com','∫'], ['Matrix Calculator','solver',true,'Matrix operations, eigenvalues, and row reduction.','https://matrixcalc.org','🔲'], ['Mathplanet','reference',true,'Textbook-style explanations from pre-algebra to precalculus.','https://mathplanet.com','🌍'],
+  { name: 'Desmos', category: 'graphing', description: 'Graph functions and explore equations interactively.', url: 'https://www.desmos.com/calculator', Icon: LineChart },
+  { name: 'GeoGebra', category: 'graphing', description: 'Explore geometry, algebra, and interactive graphs.', url: 'https://www.geogebra.org/graphing', Icon: Shapes },
+  { name: 'Wolfram|Alpha', category: 'solver', description: 'Investigate computations and step-by-step math.', url: 'https://www.wolframalpha.com/', Icon: Sigma },
+  { name: 'Khan Academy', category: 'practice', description: 'Practice with guided math lessons and exercises.', url: 'https://www.khanacademy.org/math', Icon: GraduationCap },
+  { name: 'OpenStax', category: 'textbook', description: 'Read free, peer-reviewed mathematics textbooks.', url: 'https://openstax.org/subjects/math', Icon: BookOpen },
+  { name: "Paul's Online Math Notes", category: 'reference', description: 'Review worked algebra and calculus notes.', url: 'https://tutorial.math.lamar.edu/', Icon: NotebookPen },
 ] as const;
-const categories = ['all','solver','graphing','textbook','reference','practice'] as const;
-function ResourceIcon({ name, category, url }: { name: string; category: string; url: string }) {
-  const [failed, setFailed] = useState(false);
-  const fallback = name === 'Photomath' ? Camera : category === 'graphing' ? LineChart : category === 'textbook' || category === 'reference' ? BookOpen : category === 'practice' ? GraduationCap : Calculator;
-  const Fallback = fallback;
-  return <div className={`tool-emoji ${category}`} aria-hidden="true">
-    {failed ? <Fallback size={23} strokeWidth={2} /> : <img src={new URL('/favicon.ico', url).toString()} alt="" loading="lazy" onError={() => setFailed(true)} />}
-  </div>;
-}
+const categories = ['all', 'solver', 'graphing', 'textbook', 'reference', 'practice'] as const;
 
-export default function ToolsDirectory() { const [category, setCategory] = useState<(typeof categories)[number]>('all'); const [query, setQuery] = useState(''); const shown = useMemo(() => tools.filter(([name, cat]) => (category === 'all' || cat === category) && name.toLowerCase().includes(query.toLowerCase())), [category, query]); return <section className="tools-directory" aria-labelledby="tools-title"><div className="directory-heading"><div><p className="eyebrow"><Filter size={14} /> Curated resources</p><h2 id="tools-title">Math tools & resources</h2><p>Useful places to calculate, visualize, study, and practice.</p></div><div className="tool-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools" aria-label="Search tools" /></div></div><div className="category-row">{categories.map((item) => <button className={category === item ? 'active' : ''} key={item} onClick={() => setCategory(item)}>{item === 'all' ? 'All' : item}</button>)}</div><div className="tool-grid">{shown.map(([name, cat, free, description, url]) => <a className="directory-card" href={url} target="_blank" rel="noopener noreferrer" key={name}><ResourceIcon name={name} category={cat} url={url} /><div className="directory-meta"><span>{cat}</span><b className={free ? 'free' : 'paid'}>{free ? '✓ Free' : 'Freemium'}</b></div><h3>{name}</h3><p>{description}</p><strong className="visit-link">Visit resource <ExternalLink size={14} /></strong></a>)}</div>{shown.length === 0 && <p className="empty-tools">No tools match that search yet.</p>}</section>; }
+export default function ToolsDirectory() {
+  const [category, setCategory] = useState<(typeof categories)[number]>('all');
+  const [query, setQuery] = useState('');
+  const shown = useMemo(() => tools.filter((tool) =>
+    (category === 'all' || tool.category === category) &&
+    `${tool.name} ${tool.description}`.toLowerCase().includes(query.trim().toLowerCase())
+  ), [category, query]);
+  return <section className="tools-directory" aria-labelledby="tools-title">
+    <div className="directory-heading"><div><p className="eyebrow"><Filter size={14} /> Curated resources</p>
+      <h2 id="tools-title">Math tools & resources</h2>
+      <p>Six useful places to calculate, visualize, study, and practice.</p></div>
+      <label className="tool-search"><Search size={16} /><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search tools" aria-label="Search tools" /></label>
+    </div>
+    <div className="category-row" aria-label="Filter resources">{categories.map((item) =>
+      <button type="button" className={category === item ? 'active' : ''} aria-pressed={category === item} key={item} onClick={() => setCategory(item)}>{item === 'all' ? 'All' : item}</button>
+    )}</div>
+    <div className="tool-grid">{shown.map(({ name, category: group, description, url, Icon }) =>
+      <a className="directory-card" href={url} target="_blank" rel="noopener noreferrer" key={name} aria-label={`${name} (opens in a new tab)`}>
+        <span className={`tool-emoji ${group}`} aria-hidden="true"><Icon size={23} strokeWidth={2} /></span>
+        <div className="directory-meta"><span>{group}</span></div><h3>{name}</h3><p>{description}</p>
+        <strong className="visit-link">Visit resource <ExternalLink size={14} /></strong>
+      </a>
+    )}</div>
+    {shown.length === 0 && <p className="empty-tools" role="status">No resources match that search. Try another term or choose All.</p>}
+  </section>;
+}
