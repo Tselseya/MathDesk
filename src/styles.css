@@ -149,3 +149,6 @@ html[data-motion="reduced"] .workspace-card:hover, html[data-motion="reduced"] .
 .auth-session.compact { max-width: 125px; }
 @media (max-width: 760px) { .tools-directory { padding: 42px 14px 54px; } .tool-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } .auth-session { max-width: 112px; } }
 @media (max-width: 520px) { .tool-grid { grid-template-columns: 1fr; } .directory-card { min-height: 0; } .auth-session { max-width: 85px; } .auth-session.compact { display: none; } }
+
+/* Authentic site-provided icons, kept locally so cards never depend on hotlinks. */
+.tool-emoji img { display: block; width: 34px; height: 34px; object-fit: contain; }
