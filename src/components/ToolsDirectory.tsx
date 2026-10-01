@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ExternalLink, Filter, Search } from 'lucide-react';
 
 const tools = [
@@ -117,6 +117,21 @@ export default function ToolsDirectory() {
     (category === 'all' || tool.category === category) &&
     `${tool.name} ${tool.description}`.toLowerCase().includes(query.trim().toLowerCase())
   ), [category, query]);
+  useEffect(() => {
+    const cards = document.querySelectorAll<HTMLElement>('.directory-card.reveal-on-scroll');
+    if (!('IntersectionObserver' in window)) {
+      cards.forEach((card) => card.classList.add('revealed'));
+      return;
+    }
+    const observer = new IntersectionObserver((entries) => entries.forEach((entry) => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('revealed');
+        observer.unobserve(entry.target);
+      }
+    }), { threshold: .12 });
+    cards.forEach((card) => observer.observe(card));
+    return () => observer.disconnect();
+  }, [shown]);
   return <section className="tools-directory" aria-labelledby="tools-title">
     <div className="directory-heading"><div><p className="eyebrow"><Filter size={14} /> Curated resources</p>
       <h2 id="tools-title">Math tools & resources</h2>
@@ -127,7 +142,7 @@ export default function ToolsDirectory() {
       <button type="button" className={category === item ? 'active' : ''} aria-pressed={category === item} key={item} onClick={() => setCategory(item)}>{item === 'all' ? 'All' : item}</button>
     )}</div>
     <div className="tool-grid">{shown.map(({ name, category: group, description, url, logo }) =>
-      <a className="directory-card" href={url} target="_blank" rel="noopener noreferrer" key={name} aria-label={`${name} (opens in a new tab)`}>
+      <a className="directory-card reveal-on-scroll" href={url} target="_blank" rel="noopener noreferrer" key={name} aria-label={`${name} (opens in a new tab)`}>
         <span className={`tool-emoji ${group}`} aria-hidden="true"><img src={logo} alt="" width="34" height="34" loading="lazy" /></span>
         <div className="directory-meta"><span>{group}</span></div><h3>{name}</h3><p>{description}</p>
         <strong className="visit-link">Visit resource <ExternalLink size={14} /></strong>

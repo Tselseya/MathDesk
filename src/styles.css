@@ -152,3 +152,45 @@ html[data-motion="reduced"] .workspace-card:hover, html[data-motion="reduced"] .
 
 /* Authentic site-provided icons, kept locally so cards never depend on hotlinks. */
 .tool-emoji img { display: block; width: 34px; height: 34px; object-fit: contain; }
+
+
+/* Archive-inspired chat finish: preserve the React layout/services, restore the older proportions and mascot cues. */
+.legacy-chat-shell { grid-template-columns: 280px minmax(0, 1fr); max-width: none; border: 0; box-shadow: none; }
+.legacy-chat-main { background: #f3f4f6; }
+.legacy-chat-header { background: #fff; }
+.legacy-sidebar-heading .legacy-ai-mark { display: none; }
+.legacy-header-title .legacy-ai-mark.small { display: none; }
+.legacy-msg-avatar { width: 36px; height: 36px; flex-basis: 36px; border-radius: 50%; }
+.legacy-message.ai .legacy-msg-avatar { color: transparent; background-color: #fff; background-image: url('/desky-avatar.webp'); background-position: center; background-size: cover; border: 1px solid #e2e8f3; }
+.legacy-message.user .legacy-msg-avatar { color: #2459e6; background: #e6edff; }
+.legacy-msg-bubble { background: #fff; }
+
+/* BrewedOps-informed motion, expressed with MathDesk's own visual language. */
+.hero { position: relative; isolation: isolate; }
+.hero::before { content: '∑'; position: absolute; z-index: 0; top: 2%; right: 4%; color: rgba(36,89,230,.055); font-size: clamp(8rem, 18vw, 17rem); line-height: 1; pointer-events: none; animation: mathFloat 8s ease-in-out infinite; }
+.hero-copy, .workspace-card { position: relative; z-index: 1; }
+.workspace-card { animation: rise .75s .1s var(--ease-out) backwards; transition: transform .35s var(--ease-out), box-shadow .35s ease; }
+.workspace-card:hover { transform: translateY(-4px); box-shadow: 0 35px 100px rgba(30,72,163,.19); }
+.online-dot { animation: statusGlow 2.4s ease-in-out infinite; }
+.directory-card { animation: none; }
+.directory-card.reveal-on-scroll { opacity: 0; transform: translateY(18px); transition: opacity .6s ease, transform .65s var(--ease-out), border-color .18s var(--ease-out), box-shadow .18s var(--ease-out); }
+.directory-card.reveal-on-scroll:nth-child(5n + 2) { transition-delay: .05s; }
+.directory-card.reveal-on-scroll:nth-child(5n + 3) { transition-delay: .1s; }
+.directory-card.reveal-on-scroll:nth-child(5n + 4) { transition-delay: .15s; }
+.directory-card.reveal-on-scroll:nth-child(5n) { transition-delay: .2s; }
+.directory-card.reveal-on-scroll.revealed { opacity: 1; transform: none; }
+.directory-card.reveal-on-scroll.revealed:hover { transform: translateY(-7px) rotate(.2deg); }
+.feature-strip.revealed .feature-card { animation: cardReveal .55s var(--ease-out) backwards; }
+.feature-strip.revealed .feature-card:nth-child(2) { animation-delay: .08s; }
+.feature-strip.revealed .feature-card:nth-child(3) { animation-delay: .16s; }
+@keyframes mathFloat { 0%, 100% { transform: translate3d(0, 0, 0) rotate(-8deg); } 50% { transform: translate3d(0, -13px, 0) rotate(8deg); } }
+@keyframes statusGlow { 0%, 100% { opacity: .78; } 50% { opacity: 1; } }
+@media (max-width: 800px) { .legacy-chat-shell { grid-template-columns: minmax(0, 1fr); } }
+@media (prefers-reduced-motion: reduce) {
+  .hero::before, .online-dot { animation: none !important; }
+  .workspace-card:hover, .directory-card.reveal-on-scroll.revealed:hover { transform: none; }
+  .directory-card.reveal-on-scroll { opacity: 1; transform: none; transition: none; }
+}
+html[data-motion="reduced"] .hero::before, html[data-motion="reduced"] .online-dot { animation: none !important; }
+html[data-motion="reduced"] .workspace-card:hover, html[data-motion="reduced"] .directory-card.reveal-on-scroll.revealed:hover { transform: none; }
+html[data-motion="reduced"] .directory-card.reveal-on-scroll { opacity: 1; transform: none; transition: none; }
