@@ -194,3 +194,20 @@ html[data-motion="reduced"] .workspace-card:hover, html[data-motion="reduced"] .
 html[data-motion="reduced"] .hero::before, html[data-motion="reduced"] .online-dot { animation: none !important; }
 html[data-motion="reduced"] .workspace-card:hover, html[data-motion="reduced"] .directory-card.reveal-on-scroll.revealed:hover { transform: none; }
 html[data-motion="reduced"] .directory-card.reveal-on-scroll { opacity: 1; transform: none; transition: none; }
+
+
+/* Legacy conversation tabs: separate conversations without changing the current API layer. */
+.legacy-tab-bar { display: flex; align-items: stretch; gap: 4px; min-height: 44px; padding: 8px 16px 0; overflow-x: auto; overflow-y: hidden; flex: 0 0 auto; scrollbar-width: thin; background: #fff; border-bottom: 1px solid #e2e8f0; }
+.legacy-tab-item { position: relative; display: flex; align-items: center; gap: 0; flex: 0 0 auto; max-width: 220px; margin-bottom: -1px; overflow: hidden; border: 1px solid #e2e8f0; border-bottom: 0; border-radius: 10px 10px 0 0; background: #f3f4f6; transition: background .15s ease, color .15s ease; }
+.legacy-tab-item:hover { background: #edf3ff; }
+.legacy-tab-item.active { background: #fff; }
+.legacy-tab { display: flex; align-items: center; gap: 6px; min-width: 0; max-width: 190px; padding: 6px 8px 6px 14px; color: #526b98; border: 0; background: transparent; cursor: pointer; font-size: .82rem; font-weight: 600; text-align: left; white-space: nowrap; }
+.legacy-tab.active { color: #163d91; font-weight: 700; }
+.legacy-tab > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.legacy-tab:focus-visible, .legacy-tab-close:focus-visible, .legacy-new-tab:focus-visible { position: relative; z-index: 1; outline: 2px solid #2459e6; outline-offset: -2px; }
+.legacy-tab-close { display: grid; place-items: center; flex: 0 0 18px; width: 18px; height: 18px; margin: 0 6px 0 0; padding: 0; color: #7185a9; border: 0; border-radius: 50%; background: transparent; cursor: pointer; opacity: 0; transition: color .12s ease, background .12s ease, opacity .12s ease; }
+.legacy-tab-item:hover .legacy-tab-close, .legacy-tab-close:focus-visible { opacity: 1; }
+.legacy-tab-close:hover { color: #dc2626; background: #fecaca; }
+.legacy-new-tab { display: grid; place-items: center; flex: 0 0 30px; width: 30px; height: 30px; margin: 0 0 4px 2px; padding: 0; color: #7185a9; border: 1px dashed #dce6f5; border-radius: 8px; background: transparent; cursor: pointer; transition: color .15s ease, border-color .15s ease, background .15s ease; }
+.legacy-new-tab:hover { color: #2459e6; border-color: #8eabf4; background: #edf3ff; }
+@media (max-width: 520px) { .legacy-tab-bar { padding-right: 10px; padding-left: 10px; } .legacy-tab-item { max-width: 185px; } .legacy-tab { max-width: 155px; } }
