@@ -4,6 +4,7 @@ import {
   BookOpen,
   Calculator,
   Camera,
+  Coffee,
   ChevronLeft,
   ChevronRight,
   LoaderCircle,
@@ -12,7 +13,6 @@ import {
   Plus,
   Send,
   Sparkles,
-  Upload,
   UserRound,
   X,
 } from 'lucide-react';
@@ -23,7 +23,7 @@ import HandwritingCanvas from './HandwritingCanvas';
 import LessonLibrary from './LessonLibrary';
 import { formatAIReply } from '../lib/formatAIReply';
 import { mathdeskAI } from '../services/mathdeskAI';
-import { loadChatHistory, onAuthChange, saveChatHistory, type ChatMessageRecord } from '../services/supabase';
+import { getCurrentUser, loadChatHistory, onAuthChange, saveChatHistory, type ChatMessageRecord } from '../services/supabase';
 import type { MathDeskImage, MathDeskMode } from '../types/ai';
 
 interface PendingImage extends MathDeskImage {
@@ -96,6 +96,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
   const [online, setOnline] = useState(navigator.onLine);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [toolbarOpen, setToolbarOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const requestsRef = useRef(new Map<string, AbortController>());
@@ -111,12 +112,14 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
         : tab));
     };
 
+    getCurrentUser().then((user) => { if (mounted) setSignedIn(Boolean(user)); }).catch(() => { if (mounted) setSignedIn(false); });
     loadChatHistory().then(applySavedHistory).catch(() => {
       if (mounted) setTabs((current) => current.map((tab) => tab.id === PRIMARY_TAB_ID
         ? { ...tab, notice: 'Saved history could not be loaded. Local chat still works.' }
         : tab));
     });
     const auth = onAuthChange((_event, session) => {
+      if (mounted) setSignedIn(Boolean(session));
       if (!session) return;
       loadChatHistory().then(applySavedHistory).catch(() => {
         if (mounted) setTabs((current) => current.map((tab) => tab.id === PRIMARY_TAB_ID
@@ -338,27 +341,11 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
 
   return (
     <section
-      className={`legacy-chat-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}
+      className={`legacy-chat-shell restored-chat ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}
       aria-label="MathDesk AI chatbox"
     >
       <aside className="legacy-chat-sidebar">
-        <div className="legacy-sidebar-header">
-          <div className="legacy-sidebar-heading">
-            <span className="legacy-ai-mark" aria-hidden="true">∑</span>
-            <div>
-              <h3>AI Math Assistant</h3>
-              <small>{online ? 'Online and ready to help' : 'Offline draft mode'}</small>
-            </div>
-          </div>
-          <button
-            className="legacy-sidebar-toggle"
-            onClick={() => setSidebarCollapsed(true)}
-            aria-label="Collapse sidebar"
-          >
-            <ChevronLeft size={18} />
-          </button>
-        </div>
-
+        <div className="legacy-sidebar-header"><div className="legacy-sidebar-heading"><h3>AI Math Assistant</h3></div><button type="button" className="legacy-sidebar-toggle" onClick={() => setSidebarCollapsed(true)} aria-label="Collapse sidebar"><ChevronLeft size={19} /></button></div>
         <div className="legacy-mode-select">
           {modes.map((item) => (
             <button
@@ -380,31 +367,11 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
           </button>
         </div>
 
-        <div className="legacy-sidebar-history">
-          <div className="legacy-history-title">
-            <h4>Recent Chats</h4>
-            <button type="button" onClick={newConversation} aria-label="New conversation">
-              <Plus size={15} />
-            </button>
-          </div>
-          {['Quadratic formula help', 'Integral of sin(x)dx', 'Matrix multiplication', 'Probability basics'].map((item) => (
-            <button
-              type="button"
-              className="legacy-history-item"
-              key={item}
-              onClick={() => chooseRecentChat(item)}
-            >
-              {item}
-            </button>
-          ))}
+        <div className="legacy-sidebar-history"><div className="legacy-history-title"><h4>Recent Chats</h4><button type="button" onClick={newConversation} aria-label="New conversation"><Plus size={15} /></button></div>
+          {tabs.filter((tab) => tab.messages.length > 0).map((tab) => <button type="button" className="legacy-history-item" key={tab.id} onClick={() => switchTab(tab.id)}>{tab.title}</button>)}
+          {!tabs.some((tab) => tab.messages.length > 0) && <p className="legacy-history-empty">{signedIn ? 'No saved chats yet.' : 'Log in to see your saved chats.'}</p>}
         </div>
-
-        <div className="legacy-sidebar-bottom">
-          <button type="button" className="legacy-lessons-link" onClick={() => chooseTool('lessons')}>
-            <BookOpen size={16} /> Saved lessons
-          </button>
-          <p>MathDesk helps you understand the why, not just the answer.</p>
-        </div>
+        <div className="legacy-sidebar-bottom"><a className="legacy-support-link" href="https://ko-fi.com/mathdesk" target="_blank" rel="noopener noreferrer"><Coffee size={18} /> Support MathDesk</a></div>
       </aside>
 
       <main className="legacy-chat-main">
@@ -419,16 +386,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
             </button>
           )}
           <div className="legacy-chat-header-info">
-            <div className="legacy-header-title">
-              <span className="legacy-ai-mark small" aria-hidden="true">∑</span>
-              <div>
-                <h3>MathDesk AI</h3>
-                <p>Upload or type a problem to get started</p>
-              </div>
-            </div>
-            <span className={`legacy-online-badge ${online ? '' : 'offline'}`}>
-              <span />{online ? 'Online' : 'Offline'}
-            </span>
+            <div className="legacy-header-title"><div><h3>MathDesk AI</h3><p>Upload or type a problem to get started</p></div></div>
           </div>
           <span className="legacy-mode-badge">{currentModeLabel}</span>
         </header>
@@ -477,31 +435,26 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
         </div>
 
         <div className="legacy-chat-messages" id="conversation-panel" role="tabpanel" aria-labelledby={`chat-tab-${activeTab.id}`} aria-live="polite">
-          {activeTab.messages.length === 0 && (
-            <div className="legacy-chat-empty">
-              <div className="legacy-empty-orbit" aria-hidden="true"><span>∫</span><span>π</span><span>Σ</span></div>
-              <h2>Pick a mode, then start typing</h2>
-              <p>Upload a problem, take a photo, or ask Desky to explain a concept.</p>
-            </div>
-          )}
+          <article className="legacy-message ai welcome-message"><div className="legacy-msg-avatar" aria-hidden="true">🤖</div><div className="legacy-msg-bubble"><p>👋 Hi! I'm MathDesk AI. I can help you in three ways:</p><p><strong>🔍 Solve:</strong> paste or photo a problem and I'll solve it with full steps<br /><strong>📖 Learn:</strong> upload a lesson and I'll explain it and give you examples<br /><strong>✏️ Practice:</strong> tell me a topic and I'll generate practice problems</p><p>Pick a mode on the left, or just start typing!</p></div></article>
+          <div className="legacy-quick-actions"><button type="button" onClick={() => { updateTab(activeTab.id, (tab) => ({ ...tab, mode: 'solve' })); chooseRecentChat('Solve: x² + 5x + 6 = 0'); }}>Try a sample problem</button><button type="button" onClick={() => { updateTab(activeTab.id, (tab) => ({ ...tab, mode: 'practice' })); chooseRecentChat('Generate 3 practice problems on derivatives'); }}>Generate practice</button></div>
           {activeTab.messages.map((message, index) => (
             <article className={`legacy-message ${message.role}`} key={`${activeTab.id}-${message.role}-${index}`}>
               <div className="legacy-msg-avatar" aria-hidden="true">
-                {message.role === 'ai' ? '∑' : <UserRound size={15} />}
+                {message.role === 'ai' ? '🤖' : <UserRound size={18} />}
               </div>
               <div className="legacy-msg-bubble">
                 {message.imagePreviews?.map((preview) => (
                   <img className="message-image" src={preview} alt="Uploaded math problem" key={preview} />
                 ))}
                 {message.role === 'ai'
-                  ? <div dangerouslySetInnerHTML={{ __html: formatAIReply(message.content) }} />
+                  ? <div className="formatted-reply" dangerouslySetInnerHTML={{ __html: formatAIReply(message.content) }} />
                   : <p>{message.content}</p>}
               </div>
             </article>
           ))}
           {currentBusy && (
             <div className="legacy-message ai">
-              <div className="legacy-msg-avatar" aria-hidden="true">∑</div>
+              <div className="legacy-msg-avatar" aria-hidden="true">🤖</div>
               <div className="legacy-msg-bubble">
                 <div className="legacy-typing"><i /><i /><i /><span>Desky is thinking…</span></div>
               </div>
@@ -510,20 +463,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
         </div>
 
         {activeTab.notice && <p className="chat-notice" role="alert">{activeTab.notice}</p>}
-        <div className="legacy-upload-strip" onClick={() => fileInputRef.current?.click()}>
-          <Upload size={15} /> Click to upload an image or file
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*,.pdf,.txt"
-            hidden
-            onChange={(event) => {
-              if (event.target.files) addFiles(event.target.files, activeTab.id);
-              event.target.value = '';
-            }}
-          />
-        </div>
-
+        <input ref={fileInputRef} type="file" accept="image/*" multiple hidden onChange={(event) => { if (event.target.files) addFiles(event.target.files, activeTab.id); event.target.value = ''; }} />
         {activeTab.pendingImages.length > 0 && (
           <div className="pending-images legacy-pending">
             {activeTab.pendingImages.map((image, index) => (
@@ -601,6 +541,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
               <button type="button" onClick={() => { setToolbarOpen(false); textareaRef.current?.focus(); }}><span>∑</span> Insert math symbols</button>
               <button type="button" onClick={() => chooseTool('calculator')}><Calculator size={17} /> Open calculator</button>
               <button type="button" onClick={() => chooseTool('graph')}><span>⌁</span> Graphing tool</button>
+              <button type="button" onClick={() => chooseTool('lessons')}><BookOpen size={17} /> Saved lessons</button>
               <div />
               <button type="button" onClick={newConversation}><Plus size={17} /> New conversation</button>
             </div>

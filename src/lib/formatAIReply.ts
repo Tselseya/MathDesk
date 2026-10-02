@@ -48,11 +48,28 @@ function structured(text: string) {
   return output.join('');
 }
 
+// Only the tags needed for instructional answers survive; never trust AI-supplied attributes.
+const replyTags = new Set(['div', 'span', 'p', 'br', 'strong', 'b', 'em', 'i', 'h2', 'h3', 'h4', 'table', 'thead', 'tbody', 'tr', 'th', 'td', 'ol', 'ul', 'li', 'code', 'pre', 'sup', 'sub']);
+function safeAnswerMarkup(raw: string): string {
+  const doc = new DOMParser().parseFromString(raw, 'text/html');
+  const safeNode = (node: Node): string => {
+    if (node.nodeType === Node.TEXT_NODE) return escapeHtml(node.textContent || '');
+    if (node.nodeType !== Node.ELEMENT_NODE) return '';
+    const tag = (node as Element).tagName.toLowerCase();
+    if (['script', 'style', 'iframe', 'object', 'svg', 'template', 'form'].includes(tag)) return '';
+    if (tag === 'br') return '<br />';
+    const body = Array.from(node.childNodes).map(safeNode).join('');
+    return replyTags.has(tag) ? `<${tag}>${body}</${tag}>` : body;
+  };
+  return Array.from(doc.body.childNodes).map(safeNode).join('');
+}
+
 export function formatAIReply(raw: string) {
   let text = raw;
   let kind = 'prose';
   if (raw.startsWith('TYPE:SOLVE\n')) { kind = 'structured'; text = raw.slice('TYPE:SOLVE\n'.length); }
   if (raw.startsWith('TYPE:EXPLAIN\n')) { kind = 'structured'; text = raw.slice('TYPE:EXPLAIN\n'.length); }
   if (raw.startsWith('TYPE:PROSE\n')) text = raw.slice('TYPE:PROSE\n'.length);
+  if (/<\/?(?:div|span|p|br|strong|table|tr|td|h[2-4]|ol|ul|li)\b/i.test(text)) return safeAnswerMarkup(text);
   return kind === 'structured' ? structured(text) : prose(text);
 }
