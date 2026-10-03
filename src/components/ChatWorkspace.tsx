@@ -96,6 +96,8 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
   const [online, setOnline] = useState(navigator.onLine);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [toolbarOpen, setToolbarOpen] = useState(false);
+  const [autoSendPending, setAutoSendPending] = useState(false);
+  const [graphFromCalculator, setGraphFromCalculator] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -264,6 +266,26 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
       draft: tab.draft || 'Solve this problem from the image.',
     }));
   }
+
+  function addCalculatorExchange(problem: string, reply: string) {
+    updateTab(activeTab.id, (tab) => ({
+      ...tab,
+      messages: [...tab.messages, { role: 'user', content: problem }, { role: 'ai', content: reply }],
+      title: tab.messages.some((message) => message.role === 'user') ? tab.title : titleForMessage(problem),
+    }));
+  }
+
+  // Legacy behaviour: "Solve this" on the handwriting canvas adds the drawing and sends it straight away.
+  function solveHandwriting(image: PendingImage) {
+    useImage(image);
+    setAutoSendPending(true);
+  }
+
+  useEffect(() => {
+    if (!autoSendPending || activeTab.pendingImages.length === 0) return;
+    setAutoSendPending(false);
+    void send();
+  }, [autoSendPending, tabs]);
 
   async function send() {
     const current = tabs.find((tab) => tab.id === activeTabId);
@@ -552,11 +574,13 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
       {tool === 'calculator' && (
         <CalculatorPanel
           onClose={() => setTool(null)}
-          onSendToChat={(value) => { updateDraft(activeTab.id, value); setTool(null); textareaRef.current?.focus(); }}
+          onSendToChat={(value) => { updateDraft(activeTab.id, value); textareaRef.current?.focus(); }}
+          onAddToChat={addCalculatorExchange}
+          onOpenGraph={() => setGraphFromCalculator(true)}
         />
       )}
-      {tool === 'graph' && <GraphingTool onClose={() => setTool(null)} />}
-      {tool === 'handwriting' && <HandwritingCanvas onClose={() => setTool(null)} onUseImage={useImage} />}
+      {(tool === 'graph' || graphFromCalculator) && <GraphingTool onClose={() => { setGraphFromCalculator(false); setTool((current) => (current === 'graph' ? null : current)); }} />}
+      {tool === 'handwriting' && <HandwritingCanvas onClose={() => setTool(null)} onUseImage={useImage} onSolve={solveHandwriting} />}
       {tool === 'camera' && <CameraCapture onClose={() => setTool(null)} onUseImage={useImage} />}
       {tool === 'lessons' && (
         <LessonLibrary onClose={() => setTool(null)} initialContent={activeTab.draft} />
