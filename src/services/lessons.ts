@@ -1,4 +1,7 @@
-import { getCurrentUser, supabase } from './supabase';
+import { currentUserId, supabase } from './supabase';
+import { newId } from '../lib/ids';
+import { MAX_LESSON_CHARS, MAX_LESSON_TITLE_CHARS } from '../lib/limits';
+import { ANON_SCOPE, lessonsKey, type Scope } from '../lib/localScope';
 
 export interface SavedLesson {
   id?: string;
@@ -10,33 +13,101 @@ export interface SavedLesson {
   synced?: boolean;
 }
 
-const LOCAL_KEY = 'mathdesk:saved-lessons';
-
-function readLocal(): SavedLesson[] { try { const value = JSON.parse(localStorage.getItem(LOCAL_KEY) || '[]'); return Array.isArray(value) ? value : []; } catch { return []; } }
-function writeLocal(lessons: SavedLesson[]) { try { localStorage.setItem(LOCAL_KEY, JSON.stringify(lessons)); } catch { /* Local storage is optional. */ } }
-
-export function loadLocalLessons() { return readLocal(); }
-export function saveLocalLesson(lesson: SavedLesson) { const saved = { ...lesson, updated_at: new Date().toISOString(), synced: false }; const lessons = [saved, ...readLocal().filter((item) => item.id !== saved.id)]; writeLocal(lessons); return saved; }
-export function deleteLocalLesson(id: string) { writeLocal(readLocal().filter((lesson) => lesson.id !== id)); }
-
-export async function loadCloudLessons(): Promise<SavedLesson[]> {
-  const user = await getCurrentUser(); if (!supabase || !user) return [];
-  const { data, error } = await supabase.from('saved_lessons').select('id,title,content,source_type,created_at,updated_at').eq('user_id', user.id).order('updated_at', { ascending: false }).limit(100);
-  if (error) throw error; return (data ?? []) as SavedLesson[];
+function readLocal(scope: Scope): SavedLesson[] {
+  try {
+    const value = JSON.parse(localStorage.getItem(lessonsKey(scope)) || '[]');
+    return Array.isArray(value) ? value : [];
+  } catch {
+    return [];
+  }
 }
 
-export async function saveCloudLesson(lesson: SavedLesson) {
-  const user = await getCurrentUser(); if (!supabase || !user) return null;
-  const { data, error } = await supabase.from('saved_lessons').upsert({ id: lesson.id, user_id: user.id, title: lesson.title, content: lesson.content, source_type: lesson.source_type, updated_at: new Date().toISOString() }, { onConflict: 'id' }).select('id,title,content,source_type,created_at,updated_at').single();
-  if (error) throw error; return data as SavedLesson;
+function writeLocal(scope: Scope, lessons: SavedLesson[]) {
+  try {
+    localStorage.setItem(lessonsKey(scope), JSON.stringify(lessons));
+  } catch {
+    /* Local storage is optional. */
+  }
 }
 
-export async function deleteCloudLesson(id: string) { const user = await getCurrentUser(); if (!supabase || !user) return; const { error } = await supabase.from('saved_lessons').delete().eq('id', id).eq('user_id', user.id); if (error) throw error; }
+export function loadLocalLessons(scope: Scope = ANON_SCOPE) {
+  return readLocal(scope);
+}
 
-export async function syncLessons() {
-  const user = await getCurrentUser(); if (!supabase || !user) return loadLocalLessons();
-  const local = loadLocalLessons(); const cloud = await loadCloudLessons(); const merged = [...cloud];
-  for (const lesson of local) { const saved = await saveCloudLesson(lesson); if (saved) merged.unshift({ ...saved, synced: true }); }
-  const unique = Array.from(new Map(merged.map((lesson) => [lesson.id || `${lesson.title}:${lesson.updated_at}`, lesson])).values()).sort((a, b) => String(b.updated_at).localeCompare(String(a.updated_at)));
-  writeLocal(unique.map((lesson) => ({ ...lesson, synced: true }))); return unique;
+export function saveLocalLesson(scope: Scope, lesson: SavedLesson) {
+  const saved: SavedLesson = {
+    ...lesson,
+    id: lesson.id ?? newId(),
+    title: lesson.title.slice(0, MAX_LESSON_TITLE_CHARS),
+    content: lesson.content.slice(0, MAX_LESSON_CHARS),
+    updated_at: new Date().toISOString(),
+    synced: false,
+  };
+  writeLocal(scope, [saved, ...readLocal(scope).filter((item) => item.id !== saved.id)]);
+  return saved;
+}
+
+export function deleteLocalLesson(scope: Scope, id: string) {
+  writeLocal(scope, readLocal(scope).filter((lesson) => lesson.id !== id));
+}
+
+async function requireUser(expectedUserId: string) {
+  const userId = await currentUserId();
+  return supabase && userId && userId === expectedUserId ? userId : null;
+}
+
+export async function loadCloudLessons(expectedUserId: string): Promise<SavedLesson[]> {
+  const userId = await requireUser(expectedUserId);
+  if (!supabase || !userId) return [];
+  const { data, error } = await supabase
+    .from('saved_lessons')
+    .select('id,title,content,source_type,created_at,updated_at')
+    .eq('user_id', userId)
+    .order('updated_at', { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return (data ?? []) as SavedLesson[];
+}
+
+export async function saveCloudLesson(expectedUserId: string, lesson: SavedLesson) {
+  const userId = await requireUser(expectedUserId);
+  if (!supabase || !userId) return null;
+  const { data, error } = await supabase
+    .from('saved_lessons')
+    .upsert(
+      {
+        id: lesson.id ?? newId(),
+        user_id: userId,
+        title: lesson.title.slice(0, MAX_LESSON_TITLE_CHARS),
+        content: lesson.content.slice(0, MAX_LESSON_CHARS),
+        source_type: lesson.source_type,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'id' },
+    )
+    .select('id,title,content,source_type,created_at,updated_at')
+    .single();
+  if (error) throw error;
+  return data as SavedLesson;
+}
+
+export async function deleteCloudLesson(expectedUserId: string, id: string) {
+  const userId = await requireUser(expectedUserId);
+  if (!supabase || !userId) return;
+  const { error } = await supabase.from('saved_lessons').delete().eq('id', id).eq('user_id', userId);
+  if (error) throw error;
+}
+
+/**
+ * Anonymous: just returns the device lessons.
+ * Signed in: uploads only lessons created while signed in as THIS account and not yet synced, then treats the cloud as the
+ * source of truth. Lessons saved while signed out are never uploaded into an account automatically.
+ */
+export async function syncLessons(userId: string | null): Promise<SavedLesson[]> {
+  if (!userId || !supabase) return loadLocalLessons(ANON_SCOPE);
+  const pending = loadLocalLessons(userId).filter((lesson) => !lesson.synced);
+  for (const lesson of pending) await saveCloudLesson(userId, lesson);
+  const cloud = (await loadCloudLessons(userId)).map((lesson) => ({ ...lesson, synced: true }));
+  writeLocal(userId, cloud);
+  return cloud;
 }
