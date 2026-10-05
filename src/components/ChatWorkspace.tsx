@@ -22,16 +22,20 @@ import GraphingTool from './GraphingTool';
 import HandwritingCanvas from './HandwritingCanvas';
 import LessonLibrary from './LessonLibrary';
 import { formatAIReply } from '../lib/formatAIReply';
-import { mathdeskAI } from '../services/mathdeskAI';
-import { getCurrentUser, loadChatHistory, onAuthChange, saveChatHistory, type ChatMessageRecord } from '../services/supabase';
-import type { MathDeskImage, MathDeskMode } from '../types/ai';
+import { newId } from '../lib/ids';
+import { ImageRejected, prepareImage, type PreparedImage } from '../lib/images';
+import { MAX_IMAGES_PER_MESSAGE, MAX_PROMPT_CHARS } from '../lib/limits';
+import { draftKey, scopeOf } from '../lib/localScope';
+import { mathdeskAI, validateRequest } from '../services/mathdeskAI';
+import { deleteConversation, loadConversations, loadLegacyHistory, saveConversation, type ChatMessageRecord } from '../services/supabase';
+import type { MathDeskMode } from '../types/ai';
 
-interface PendingImage extends MathDeskImage {
-  preview: string;
-}
+type PendingImage = PreparedImage;
 
 interface ConversationTab {
   id: string;
+  /** Storage slot for the unsent draft: "main" for the first tab so a reload restores it, otherwise the tab id. */
+  draftSlot: string;
   title: string;
   mode: MathDeskMode;
   messages: ChatMessageRecord[];
@@ -43,9 +47,11 @@ interface ConversationTab {
 interface ChatWorkspaceProps {
   initialMode?: MathDeskMode;
   initialPrompt?: string;
+  /** Signed-in user id, or null for anonymous use. The parent remounts this component when it changes. */
+  userId: string | null;
 }
 
-const PRIMARY_TAB_ID = 'main';
+const PRIMARY_DRAFT_SLOT = 'main';
 const modes: Array<{ id: MathDeskMode; label: string; hint: string }> = [
   { id: 'solve', label: 'Solve a Problem', hint: 'Work step by step' },
   { id: 'learn', label: 'Learn a Concept', hint: 'Understand the idea' },
@@ -58,20 +64,18 @@ const placeholders: Record<MathDeskMode, string> = {
   deskbot: 'Ask Desky how MathDesk works…',
 };
 
-function draftStorageKey(id: string) {
-  return id === PRIMARY_TAB_ID ? 'mathdesk:draft:main' : `mathdesk:draft:${id}`;
-}
-
-function createConversationTab(mode: MathDeskMode, id?: string, initialPrompt = ''): ConversationTab {
-  const tabId = id ?? `chat-${globalThis.crypto?.randomUUID?.() ?? `${Date.now()}-${Math.random().toString(36).slice(2)}`}`;
+function createConversationTab(scope: string, mode: MathDeskMode, slot?: string, initialPrompt = ''): ConversationTab {
+  const tabId = newId();
+  const draftSlot = slot ?? tabId;
   let draft = initialPrompt;
   try {
-    draft = localStorage.getItem(draftStorageKey(tabId)) ?? initialPrompt;
+    draft = localStorage.getItem(draftKey(scope, draftSlot)) ?? initialPrompt;
   } catch {
     // Browser storage may be unavailable in private contexts.
   }
   return {
     id: tabId,
+    draftSlot,
     title: 'New conversation',
     mode,
     messages: [],
@@ -86,11 +90,12 @@ function titleForMessage(message: string) {
   return title.slice(0, 40) || 'Image problem';
 }
 
-export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '' }: ChatWorkspaceProps) {
+export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '', userId }: ChatWorkspaceProps) {
+  const scope = scopeOf(userId);
   const [tabs, setTabs] = useState<ConversationTab[]>(() => [
-    createConversationTab(initialMode, PRIMARY_TAB_ID, initialPrompt),
+    createConversationTab(scope, initialMode, PRIMARY_DRAFT_SLOT, initialPrompt),
   ]);
-  const [activeTabId, setActiveTabId] = useState(PRIMARY_TAB_ID);
+  const [activeTabId, setActiveTabId] = useState(() => tabs[0].id);
   const [busyTabIds, setBusyTabIds] = useState<Set<string>>(() => new Set());
   const [tool, setTool] = useState<'calculator' | 'graph' | 'handwriting' | 'camera' | 'lessons' | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
@@ -98,43 +103,61 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
   const [toolbarOpen, setToolbarOpen] = useState(false);
   const [autoSendPending, setAutoSendPending] = useState(false);
   const [graphFromCalculator, setGraphFromCalculator] = useState(false);
-  const [signedIn, setSignedIn] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const requestsRef = useRef(new Map<string, AbortController>());
+  const calculatorTabId = useRef<string | null>(null);
+  const tabsRef = useRef(tabs);
+  tabsRef.current = tabs;
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
+  const signedIn = Boolean(userId);
 
+  // Load this account's saved conversations once. The parent remounts the workspace when the account changes,
+  // so nothing from a previous account can ever be on screen here.
   useEffect(() => {
     let mounted = true;
-    const applySavedHistory = (saved: ChatMessageRecord[]) => {
-      if (!mounted || saved.length === 0) return;
-      const firstUserMessage = saved.find((message) => message.role === 'user')?.content ?? '';
-      setTabs((current) => current.map((tab) => tab.id === PRIMARY_TAB_ID
-        ? { ...tab, messages: saved, title: firstUserMessage ? titleForMessage(firstUserMessage) : 'Recent conversation' }
-        : tab));
+    if (!userId) return undefined;
+    const noticeOnPrimary = (notice: string) => {
+      if (mounted) setTabs((current) => current.map((tab, index) => index === 0 ? { ...tab, notice } : tab));
     };
+    loadConversations(userId).then(async (saved) => {
+      if (!mounted) return;
+      if (saved.length > 0) {
+        const restored: ConversationTab[] = saved.map((row) => ({
+          id: row.id,
+          draftSlot: row.id,
+          title: row.title,
+          mode: row.mode,
+          messages: row.messages,
+          draft: '',
+          pendingImages: [],
+          notice: '',
+        }));
+        setTabs((current) => {
+          const primary = current[0];
+          const primaryInUse = primary && (primary.messages.length > 0 || primary.draft.trim() !== '' || primary.pendingImages.length > 0);
+          return primaryInUse ? [primary, ...restored] : restored;
+        });
+        setActiveTabId((currentId) => {
+          const primary = tabsRef.current[0];
+          const primaryInUse = primary && primary.id === currentId && (primary.messages.length > 0 || primary.draft.trim() !== '' || primary.pendingImages.length > 0);
+          return primaryInUse ? currentId : restored[0].id;
+        });
+        return;
+      }
+      const legacy = await loadLegacyHistory(userId);
+      if (!mounted || legacy.length === 0) return;
+      const firstUserMessage = legacy.find((message) => message.role === 'user')?.content ?? '';
+      setTabs((current) => current.map((tab, index) => index === 0 && tab.messages.length === 0
+        ? { ...tab, messages: legacy, title: firstUserMessage ? titleForMessage(firstUserMessage) : 'Recent conversation' }
+        : tab));
+    }).catch(() => noticeOnPrimary('Saved chats could not be loaded. Chatting still works.'));
+    return () => { mounted = false; };
+  }, [userId]);
 
-    getCurrentUser().then((user) => { if (mounted) setSignedIn(Boolean(user)); }).catch(() => { if (mounted) setSignedIn(false); });
-    loadChatHistory().then(applySavedHistory).catch(() => {
-      if (mounted) setTabs((current) => current.map((tab) => tab.id === PRIMARY_TAB_ID
-        ? { ...tab, notice: 'Saved history could not be loaded. Local chat still works.' }
-        : tab));
-    });
-    const auth = onAuthChange((_event, session) => {
-      if (mounted) setSignedIn(Boolean(session));
-      if (!session) return;
-      loadChatHistory().then(applySavedHistory).catch(() => {
-        if (mounted) setTabs((current) => current.map((tab) => tab.id === PRIMARY_TAB_ID
-          ? { ...tab, notice: 'Cloud history is unavailable.' }
-          : tab));
-      });
-    });
-    return () => {
-      mounted = false;
-      auth.data.subscription.unsubscribe();
-      requestsRef.current.forEach((controller) => controller.abort());
-      requestsRef.current.clear();
-    };
+  useEffect(() => () => {
+    requestsRef.current.forEach((controller) => controller.abort());
+    requestsRef.current.clear();
   }, []);
 
   useEffect(() => {
@@ -154,9 +177,10 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
 
   function updateDraft(tabId: string, value: string) {
     updateTab(tabId, (tab) => ({ ...tab, draft: value }));
+    const slot = tabsRef.current.find((tab) => tab.id === tabId)?.draftSlot ?? tabId;
     try {
-      if (value) localStorage.setItem(draftStorageKey(tabId), value);
-      else localStorage.removeItem(draftStorageKey(tabId));
+      if (value) localStorage.setItem(draftKey(scope, slot), value);
+      else localStorage.removeItem(draftKey(scope, slot));
     } catch {
       // Keep the composer usable if browser storage is unavailable.
     }
@@ -171,19 +195,25 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
     });
   }
 
-  function addFiles(files: FileList | File[], tabId = activeTabId) {
-    Array.from(files).filter((file) => file.type.startsWith('image/')).forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = () => {
-        const dataUrl = String(reader.result);
-        const [, data] = dataUrl.split(',');
-        updateTab(tabId, (tab) => ({
-          ...tab,
-          pendingImages: [...tab.pendingImages, { mimeType: file.type, data, preview: dataUrl }],
-        }));
-      };
-      reader.readAsDataURL(file);
-    });
+  async function addFiles(files: FileList | File[], tabId = activeTabId) {
+    const incoming = Array.from(files).filter((file) => file.type.startsWith('image/'));
+    if (incoming.length === 0) return;
+    for (const file of incoming) {
+      const existing = tabsRef.current.find((tab) => tab.id === tabId)?.pendingImages.length ?? 0;
+      if (existing >= MAX_IMAGES_PER_MESSAGE) {
+        updateTab(tabId, (tab) => ({ ...tab, notice: `You can attach up to ${MAX_IMAGES_PER_MESSAGE} images per message.` }));
+        return;
+      }
+      try {
+        const image = await prepareImage(file);
+        updateTab(tabId, (tab) => tab.pendingImages.length >= MAX_IMAGES_PER_MESSAGE
+          ? tab
+          : { ...tab, notice: '', pendingImages: [...tab.pendingImages, image] });
+      } catch (problem) {
+        const message = problem instanceof ImageRejected ? problem.message : 'That image could not be used. Please try another one.';
+        updateTab(tabId, (tab) => ({ ...tab, notice: message }));
+      }
+    }
   }
 
   function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
@@ -191,7 +221,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
       .find((item) => item.type.startsWith('image/'))?.getAsFile();
     if (!image) return;
     event.preventDefault();
-    addFiles([image], activeTabId);
+    void addFiles([image], activeTabId);
   }
 
   function switchTab(tabId: string) {
@@ -201,7 +231,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
   }
 
   function newConversation() {
-    const tab = createConversationTab(activeTab?.mode ?? initialMode);
+    const tab = createConversationTab(scope, activeTab?.mode ?? initialMode);
     setTabs((current) => [...current, tab]);
     setActiveTabId(tab.id);
     setToolbarOpen(false);
@@ -216,13 +246,15 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
     requestsRef.current.delete(tabId);
     markBusy(tabId, false);
     try {
-      localStorage.removeItem(draftStorageKey(tabId));
+      localStorage.removeItem(draftKey(scope, tabs[index].draftSlot));
     } catch {
       // Closing a tab should still work if storage is unavailable.
     }
+    // Closing a conversation also removes its saved copy, like closing a browser tab.
+    if (userId && tabs[index].messages.length > 0) void deleteConversation(userId, tabId).catch(() => undefined);
 
     if (tabs.length === 1) {
-      const replacement = createConversationTab(activeTab?.mode ?? initialMode);
+      const replacement = createConversationTab(scope, activeTab?.mode ?? initialMode);
       setTabs([replacement]);
       setActiveTabId(replacement.id);
       return;
@@ -250,6 +282,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
   }
 
   function chooseTool(next: typeof tool) {
+    if (next === 'calculator') calculatorTabId.current = activeTabId;
     setTool(next);
     setToolbarOpen(false);
   }
@@ -260,19 +293,27 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
   }
 
   function useImage(image: PendingImage) {
-    updateTab(activeTab.id, (tab) => ({
-      ...tab,
-      pendingImages: [...tab.pendingImages, image],
-      draft: tab.draft || 'Solve this problem from the image.',
-    }));
+    updateTab(activeTab.id, (tab) => tab.pendingImages.length >= MAX_IMAGES_PER_MESSAGE
+      ? { ...tab, notice: `You can attach up to ${MAX_IMAGES_PER_MESSAGE} images per message.` }
+      : {
+        ...tab,
+        pendingImages: [...tab.pendingImages, image],
+        draft: tab.draft || 'Solve this problem from the image.',
+      });
   }
 
+  // The calculator is not modal, so the conversation it was opened from may no longer be the active one.
   function addCalculatorExchange(problem: string, reply: string) {
-    updateTab(activeTab.id, (tab) => ({
-      ...tab,
-      messages: [...tab.messages, { role: 'user', content: problem }, { role: 'ai', content: reply }],
-      title: tab.messages.some((message) => message.role === 'user') ? tab.title : titleForMessage(problem),
-    }));
+    const targetId = tabsRef.current.some((tab) => tab.id === calculatorTabId.current) ? calculatorTabId.current! : activeTabId;
+    const target = tabsRef.current.find((tab) => tab.id === targetId);
+    if (!target) return;
+    const messages: ChatMessageRecord[] = [...target.messages, { role: 'user', content: problem }, { role: 'ai', content: reply }];
+    const title = target.messages.some((message) => message.role === 'user') ? target.title : titleForMessage(problem);
+    updateTab(targetId, (tab) => ({ ...tab, messages, title }));
+    if (userId) {
+      void saveConversation(userId, { id: targetId, title, mode: target.mode, messages })
+        .catch(() => updateTab(targetId, (tab) => ({ ...tab, notice: 'This calculation could not be saved to your account.' })));
+    }
   }
 
   // Legacy behaviour: "Solve this" on the handwriting canvas adds the drawing and sends it straight away.
@@ -292,6 +333,15 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
     if (!current || busyTabIds.has(current.id)) return;
     const text = current.draft.trim();
     if (!text && current.pendingImages.length === 0) return;
+    const images = current.pendingImages.map(({ preview: _preview, ...image }) => image);
+    const message = text || 'Solve this problem from the uploaded image.';
+    // Check limits before touching state, so a rejected message never loses the draft.
+    try {
+      validateRequest({ message, mode: current.mode, ...(images.length ? { hasImages: true, images } : {}) });
+    } catch (problem) {
+      updateTab(current.id, (tab) => ({ ...tab, notice: problem instanceof Error ? problem.message : 'That message could not be sent.' }));
+      return;
+    }
     if (!online) {
       updateTab(current.id, (tab) => ({
         ...tab,
@@ -302,14 +352,13 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
 
     const userMessage: ChatMessageRecord = {
       role: 'user',
-      content: text || 'Solve this problem from the uploaded image.',
+      content: message,
       imagePreviews: current.pendingImages.map((image) => image.preview),
     };
     const nextMessages = [...current.messages, userMessage];
     const nextTitle = current.messages.some((message) => message.role === 'user')
       ? current.title
       : titleForMessage(text || userMessage.content);
-    const images = current.pendingImages.map(({ preview: _preview, ...image }) => image);
 
     updateTab(current.id, (tab) => ({
       ...tab,
@@ -320,7 +369,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
       notice: '',
     }));
     try {
-      localStorage.removeItem(draftStorageKey(current.id));
+      localStorage.removeItem(draftKey(scope, current.draftSlot));
     } catch {
       // The message is already in the active tab state.
     }
@@ -328,6 +377,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
     const controller = new AbortController();
     requestsRef.current.set(current.id, controller);
     markBusy(current.id, true);
+    let answered: ChatMessageRecord[] | null = null;
     try {
       const reply = await mathdeskAI.request(
         {
@@ -337,13 +387,9 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
         },
         { signal: controller.signal },
       );
-      const updatedMessages: ChatMessageRecord[] = [
-        ...nextMessages,
-        { role: 'ai', content: reply },
-      ];
+      const updatedMessages: ChatMessageRecord[] = [...nextMessages, { role: 'ai', content: reply }];
+      answered = updatedMessages;
       updateTab(current.id, (tab) => ({ ...tab, messages: updatedMessages }));
-      // The existing Supabase API stores one active conversation per user. Extra open tabs stay session-local.
-      await saveChatHistory(updatedMessages);
     } catch (error) {
       if (!controller.signal.aborted) {
         updateTab(current.id, (tab) => ({
@@ -354,6 +400,14 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
     } finally {
       if (requestsRef.current.get(current.id) === controller) requestsRef.current.delete(current.id);
       markBusy(current.id, false);
+    }
+    // Saving is separate from answering: a save problem must not look like an AI failure.
+    if (answered && userId && !controller.signal.aborted) {
+      try {
+        await saveConversation(userId, { id: current.id, title: nextTitle, mode: current.mode, messages: answered });
+      } catch {
+        updateTab(current.id, (tab) => ({ ...tab, notice: 'The answer could not be saved to your account. It is still here for this session.' }));
+      }
     }
   }
 
@@ -529,6 +583,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
                 }
               }}
               placeholder={placeholders[activeTab.mode]}
+              maxLength={MAX_PROMPT_CHARS}
               rows={1}
               disabled={currentBusy}
               aria-label="Message MathDesk AI"
@@ -553,8 +608,12 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
           </div>
           <div className="legacy-composer-hint">
             <span>Shift + Enter for a new line</span>
-            <span>{online ? 'AI responses are generated online' : 'Draft saved locally'}</span>
+            <span>
+              {activeTab.draft.length > MAX_PROMPT_CHARS * 0.8 && <span className="chat-count">{activeTab.draft.length.toLocaleString()}/{MAX_PROMPT_CHARS.toLocaleString()} · </span>}
+              {!mathdeskAI.configured ? 'AI is not available right now' : online ? 'AI responses are generated online' : 'Draft saved locally'}
+            </span>
           </div>
+          <p className="chat-privacy-note">Your messages and photos are sent to an AI service to write answers. Please don&apos;t share personal information. <a href="./privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a></p>
           {toolbarOpen && (
             <div className="legacy-toolbar-popup">
               <button type="button" onClick={() => chooseTool('camera')}><Camera size={17} /> Take a photo</button>
@@ -583,7 +642,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
       {tool === 'handwriting' && <HandwritingCanvas onClose={() => setTool(null)} onUseImage={useImage} onSolve={solveHandwriting} />}
       {tool === 'camera' && <CameraCapture onClose={() => setTool(null)} onUseImage={useImage} />}
       {tool === 'lessons' && (
-        <LessonLibrary onClose={() => setTool(null)} initialContent={activeTab.draft} />
+        <LessonLibrary onClose={() => setTool(null)} initialContent={activeTab.draft} userId={userId} />
       )}
     </section>
   );
