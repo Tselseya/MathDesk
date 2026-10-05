@@ -124,6 +124,10 @@ export default function CalculatorPanel({ onClose, onSendToChat, onAddToChat, on
     top: 80,
   }));
   const dragOffset = useRef<{ x: number; y: number } | null>(null);
+  const solveController = useRef<AbortController | null>(null);
+
+  // Closing the calculator must not leave a request running in the background.
+  useEffect(() => () => solveController.current?.abort(), []);
 
   const keyboard = keyboards[topic];
   const symbols = useMemo(() => keyboard.tabs[tab] ?? [], [keyboard, tab]);
@@ -137,22 +141,28 @@ export default function CalculatorPanel({ onClose, onSendToChat, onAddToChat, on
   async function solve() {
     const problem = input.trim();
     if (!problem || busy) return;
+    const controller = new AbortController();
+    solveController.current = controller;
     setBusy(true);
     setAnswerOpen(true);
     setAnswer('');
     setError('');
     try {
-      const reply = await mathdeskAI.solve(problem);
+      const reply = await mathdeskAI.solve(problem, {}, { signal: controller.signal });
+      if (controller.signal.aborted) return;
       setAnswer(formatAIReply(reply));
       if (alsoSendToChat) onAddToChat?.(problem, reply);
     } catch (caught) {
+      if (controller.signal.aborted) return;
       setError(caught instanceof Error ? caught.message : 'Could not reach the AI.');
     } finally {
-      setBusy(false);
+      if (solveController.current === controller) solveController.current = null;
+      if (!controller.signal.aborted) setBusy(false);
     }
   }
 
   const solveRef = useRef(solve);
+  const MAX_EXPRESSION = 500;
   solveRef.current = solve;
 
   // Physical keyboard support, like the legacy calculator (ignored while typing in a field).
@@ -163,9 +173,9 @@ export default function CalculatorPanel({ onClose, onSendToChat, onAddToChat, on
       const tag = target?.tagName ?? '';
       if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || target?.isContentEditable) return;
       const { key } = event;
-      if (/^[0-9.+\-()^]$/.test(key)) { event.preventDefault(); setInput((value) => value + key); }
-      else if (key === '*') { event.preventDefault(); setInput((value) => value + '×'); }
-      else if (key === '/') { event.preventDefault(); setInput((value) => value + '÷'); }
+      if (/^[0-9.+\-()^]$/.test(key)) { event.preventDefault(); setInput((value) => (value + key).slice(0, MAX_EXPRESSION)); }
+      else if (key === '*') { event.preventDefault(); setInput((value) => (value + '×').slice(0, MAX_EXPRESSION)); }
+      else if (key === '/') { event.preventDefault(); setInput((value) => (value + '÷').slice(0, MAX_EXPRESSION)); }
       else if (key === 'Backspace') { event.preventDefault(); setInput((value) => value.slice(0, -1)); }
       else if (key === 'Enter' && tag !== 'BUTTON') { event.preventDefault(); void solveRef.current(); }
       else if (key === 'Escape') { event.preventDefault(); onClose(); }
@@ -241,7 +251,7 @@ export default function CalculatorPanel({ onClose, onSendToChat, onAddToChat, on
                 type="button"
                 key={`${symbol}-${index}`}
                 className={`lc-key ${/^[+×÷=^-]$/.test(symbol) ? 'lc-operator' : ''}`}
-                onClick={() => setInput((value) => value + symbol)}
+                onClick={() => setInput((value) => (value + symbol).slice(0, MAX_EXPRESSION))}
               >
                 {symbol}
               </button>
@@ -251,7 +261,7 @@ export default function CalculatorPanel({ onClose, onSendToChat, onAddToChat, on
 
         <div className="lc-footer">
           <label className="lc-switch-row">
-            <button type="button" role="switch" aria-checked={alsoSendToChat} className={`lc-switch ${alsoSendToChat ? 'on' : ''}`} onClick={() => setAlsoSendToChat((on) => !on)} />
+            <button type="button" role="switch" aria-checked={alsoSendToChat} aria-label="Also send to chat window" className={`lc-switch ${alsoSendToChat ? 'on' : ''}`} onClick={() => setAlsoSendToChat((on) => !on)} />
             Also send to chat window
           </label>
           <button type="button" className="lc-put" onClick={() => onSendToChat?.(input)} disabled={!input}>Put in chat box ↗</button>
