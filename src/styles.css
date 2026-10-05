@@ -478,3 +478,26 @@ html[data-motion="reduced"] .directory-card.reveal-on-scroll { opacity: 1; trans
 .lh-solve { padding: 12px 28px; border: 0; border-radius: 14px; color: #fff; background: linear-gradient(135deg, #1a56db, #2f80ed); cursor: pointer; font-size: .95rem; font-weight: 800; }
 .lh-solve:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 4px 16px rgba(26, 86, 219, .35); }
 .lh-solve:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ==========================================================
+   LAUNCH-READINESS ADDITIONS (account dialog, notices, legal)
+   ========================================================== */
+.chat-loading { padding: 48px 16px; color: #4b5563; text-align: center; }
+.chat-privacy-note { margin: 4px 14px 8px; color: #6b7280; font-size: .72rem; line-height: 1.4; }
+.chat-privacy-note a, .footer a, .auth-legal a { color: #1a56db; }
+.chat-count { color: #b45309; font-variant-numeric: tabular-nums; }
+.graph-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0; padding: 10px 16px; color: #4b5563; background: #f0f4ff; font-size: .85rem; }
+.graph-link { display: inline-flex; align-items: center; gap: 4px; padding: 0; border: 0; color: #1a56db; background: none; cursor: pointer; font: inherit; text-decoration: underline; }
+.auth-session { border: 0; background: none; cursor: pointer; font: inherit; }
+.auth-session:hover { text-decoration: underline; }
+.auth-link { display: block; margin: 10px auto 0; padding: 4px; border: 0; color: #1a56db; background: none; cursor: pointer; font-size: .85rem; text-decoration: underline; }
+.auth-legal { margin: 12px 0 0; color: #6b7280; font-size: .75rem; line-height: 1.4; text-align: center; }
+.auth-account { display: grid; gap: 14px; margin-top: 12px; }
+.auth-secondary { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border: 1px solid #c7d7fe; border-radius: 10px; color: #1a56db; background: #eff6ff; cursor: pointer; font-weight: 700; }
+.auth-secondary:disabled, .auth-danger:disabled { opacity: .55; cursor: not-allowed; }
+.auth-danger-zone { display: grid; gap: 10px; padding: 14px; border: 1px solid #fecaca; border-radius: 12px; background: #fef2f2; color: #7f1d1d; font-size: .85rem; }
+.auth-danger-zone p { margin: 0; }
+.auth-danger { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border: 0; border-radius: 10px; color: #fff; background: #dc2626; cursor: pointer; font-weight: 700; }
+.lh-message { margin: 0; padding: 8px 16px; color: #b91c1c; background: #fef2f2; font-size: .85rem; }
+
+              
