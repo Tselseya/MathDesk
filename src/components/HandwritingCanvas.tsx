@@ -1,15 +1,21 @@
 import { useEffect, useRef, useState } from 'react';
 import type { PointerEvent as ReactPointerEvent } from 'react';
-import type { MathDeskImage } from '../types/ai';
-
-type DrawnImage = MathDeskImage & { preview: string };
+import { useDialogA11y } from '../hooks/useDialogA11y';
+import { base64Bytes, type PreparedImage } from '../lib/images';
+import { MAX_ENCODED_IMAGE_BYTES } from '../lib/limits';
 
 interface HandwritingCanvasProps {
   onClose: () => void;
   /** Adds the drawing to the chat as a pending image (fallback when onSolve is not given). */
-  onUseImage: (image: DrawnImage) => void;
+  onUseImage: (image: PreparedImage) => void;
   /** Legacy behaviour: "Solve this" adds the drawing and sends it right away. */
-  onSolve?: (image: DrawnImage) => void;
+  onSolve?: (image: PreparedImage) => void;
+}
+
+interface Stroke {
+  tool: 'pen' | 'eraser';
+  size: number;
+  points: Array<[number, number]>;
 }
 
 const SIZES: Array<{ label: string; value: number }> = [
@@ -17,24 +23,54 @@ const SIZES: Array<{ label: string; value: number }> = [
   { label: 'M', value: 4 },
   { label: 'L', value: 6 },
 ];
-const MAX_UNDO = 30;
+const MAX_STROKES = 400;
+const MAX_POINTS_PER_STROKE = 4000;
+const INK = '#1a1a1a';
 
 export default function HandwritingCanvas({ onClose, onUseImage, onSolve }: HandwritingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const drawing = useRef(false);
-  const undoStack = useRef<ImageData[]>([]);
+  const cssSize = useRef({ width: 500, height: 400 });
+  const strokes = useRef<Stroke[]>([]);
+  const current = useRef<Stroke | null>(null);
   const [tool, setTool] = useState<'pen' | 'eraser'>('pen');
   const [size, setSize] = useState(4);
-  const [hasInk, setHasInk] = useState(false);
+  const [penStrokes, setPenStrokes] = useState(0);
+  const [message, setMessage] = useState('');
+  const dialogRef = useDialogA11y<HTMLElement>(onClose);
+
+  function paintStroke(context: CanvasRenderingContext2D, stroke: Stroke, fromIndex = 0) {
+    const { points } = stroke;
+    if (points.length === 0) return;
+    context.strokeStyle = stroke.tool === 'eraser' ? '#ffffff' : INK;
+    context.lineWidth = stroke.tool === 'eraser' ? stroke.size * 2.5 : stroke.size;
+    context.beginPath();
+    const start = Math.max(0, fromIndex - 1);
+    context.moveTo(points[start][0], points[start][1]);
+    if (points.length === 1) context.lineTo(points[0][0] + 0.01, points[0][1] + 0.01); // a tap leaves a dot
+    for (let index = start + 1; index < points.length; index += 1) context.lineTo(points[index][0], points[index][1]);
+    context.stroke();
+  }
+
+  function redraw() {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext('2d');
+    if (!canvas || !context) return;
+    context.fillStyle = '#ffffff';
+    context.fillRect(0, 0, cssSize.current.width, cssSize.current.height);
+    strokes.current.forEach((stroke) => paintStroke(context, stroke));
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const context = canvas?.getContext('2d');
     if (!canvas || !context) return;
-    const ratio = window.devicePixelRatio || 1;
-    const width = Math.max(240, Math.min(500, (wrapperRef.current?.clientWidth ?? 500) - 32));
-    const height = Math.max(200, Math.min(400, Math.round(window.innerHeight * 0.45)));
+    // Cap the pixel ratio: undo history is stored as vectors, but the export size still grows with it.
+    const ratio = Math.min(window.devicePixelRatio || 1, 2);
+    const available = (wrapperRef.current?.clientWidth ?? 500) - 32;
+    const width = Math.max(160, Math.min(500, available));
+    const height = Math.max(160, Math.min(400, Math.round(window.innerHeight * 0.45)));
+    cssSize.current = { width, height };
     canvas.width = Math.round(width * ratio);
     canvas.height = Math.round(height * ratio);
     canvas.style.width = `${width}px`;
@@ -42,93 +78,90 @@ export default function HandwritingCanvas({ onClose, onUseImage, onSolve }: Hand
     context.scale(ratio, ratio);
     context.lineCap = 'round';
     context.lineJoin = 'round';
-    context.fillStyle = '#ffffff';
-    context.fillRect(0, 0, width, height);
+    redraw();
   }, []);
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose();
-    }
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
-
-  function pointFrom(event: ReactPointerEvent<HTMLCanvasElement>) {
+  function pointFrom(event: ReactPointerEvent<HTMLCanvasElement>): [number, number] {
     const rect = event.currentTarget.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    const scaleX = rect.width ? cssSize.current.width / rect.width : 1;
+    const scaleY = rect.height ? cssSize.current.height / rect.height : 1;
+    return [(event.clientX - rect.left) * scaleX, (event.clientY - rect.top) * scaleY];
   }
 
   function startStroke(event: ReactPointerEvent<HTMLCanvasElement>) {
     event.preventDefault();
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
-    if (!canvas || !context) return;
-    undoStack.current.push(context.getImageData(0, 0, canvas.width, canvas.height));
-    if (undoStack.current.length > MAX_UNDO) undoStack.current.shift();
-    drawing.current = true;
-    const point = pointFrom(event);
-    context.beginPath();
-    context.moveTo(point.x, point.y);
+    if (strokes.current.length >= MAX_STROKES) { setMessage('That is a lot of strokes. Use Clear to start fresh.'); return; }
+    setMessage('');
     event.currentTarget.setPointerCapture(event.pointerId);
-    // A single tap should leave a dot.
-    context.strokeStyle = tool === 'eraser' ? '#ffffff' : '#1a1a1a';
-    context.lineWidth = tool === 'eraser' ? size * 2.5 : size;
-    context.lineTo(point.x + 0.01, point.y + 0.01);
-    context.stroke();
-    setHasInk(true);
+    current.current = { tool, size, points: [pointFrom(event)] };
+    const context = canvasRef.current?.getContext('2d');
+    if (context) paintStroke(context, current.current);
   }
 
   function moveStroke(event: ReactPointerEvent<HTMLCanvasElement>) {
-    if (!drawing.current) return;
+    const stroke = current.current;
+    if (!stroke) return;
     event.preventDefault();
+    if (stroke.points.length >= MAX_POINTS_PER_STROKE) return;
+    stroke.points.push(pointFrom(event));
     const context = canvasRef.current?.getContext('2d');
-    if (!context) return;
-    const point = pointFrom(event);
-    context.strokeStyle = tool === 'eraser' ? '#ffffff' : '#1a1a1a';
-    context.lineWidth = tool === 'eraser' ? size * 2.5 : size;
-    context.lineTo(point.x, point.y);
-    context.stroke();
+    if (context) paintStroke(context, stroke, stroke.points.length - 1);
   }
 
   function endStroke() {
-    drawing.current = false;
+    const stroke = current.current;
+    current.current = null;
+    if (!stroke) return;
+    strokes.current.push(stroke);
+    setPenStrokes(strokes.current.filter((item) => item.tool === 'pen').length);
   }
 
   function undo() {
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
-    const previous = undoStack.current.pop();
-    if (!canvas || !context || !previous) return;
-    context.putImageData(previous, 0, 0);
-    if (undoStack.current.length === 0) setHasInk(false);
+    if (strokes.current.pop()) {
+      setPenStrokes(strokes.current.filter((item) => item.tool === 'pen').length);
+      redraw();
+    }
   }
 
   function clear() {
-    const canvas = canvasRef.current;
-    const context = canvas?.getContext('2d');
-    if (!canvas || !context) return;
-    undoStack.current = [];
-    context.save();
-    context.setTransform(1, 0, 0, 1, 0, 0);
-    context.fillStyle = '#ffffff';
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.restore();
-    setHasInk(false);
+    strokes.current = [];
+    current.current = null;
+    setPenStrokes(0);
+    setMessage('');
+    redraw();
+  }
+
+  /** Erasing everything also leaves nothing worth sending, so check the actual pixels. */
+  function isBlank(canvas: HTMLCanvasElement) {
+    const context = canvas.getContext('2d');
+    if (!context) return true;
+    const { data } = context.getImageData(0, 0, canvas.width, canvas.height);
+    for (let index = 0; index < data.length; index += 4) {
+      if (data[index] < 245 || data[index + 1] < 245 || data[index + 2] < 245) return false;
+    }
+    return true;
   }
 
   function solveDrawing() {
     const canvas = canvasRef.current;
-    if (!canvas || !hasInk) return;
-    const preview = canvas.toDataURL('image/png');
-    const image: DrawnImage = { mimeType: 'image/png', data: preview.split(',')[1], preview };
+    if (!canvas) return;
+    if (penStrokes === 0 || isBlank(canvas)) { setMessage('Write or draw your problem first.'); return; }
+    let preview = canvas.toDataURL('image/png');
+    let mimeType = 'image/png';
+    if (base64Bytes(preview.split(',')[1] ?? '') > MAX_ENCODED_IMAGE_BYTES) {
+      preview = canvas.toDataURL('image/jpeg', 0.9);
+      mimeType = 'image/jpeg';
+    }
+    const data = preview.split(',')[1] ?? '';
+    if (!data || base64Bytes(data) > MAX_ENCODED_IMAGE_BYTES) { setMessage('That drawing is too detailed to send. Clear and try a simpler one.'); return; }
+    const image: PreparedImage = { mimeType, data, preview };
     (onSolve ?? onUseImage)(image);
     onClose();
   }
 
   return (
     <div className="lh-overlay" onClick={(event) => { if (event.target === event.currentTarget) onClose(); }}>
-      <section className="lh-card" role="dialog" aria-modal="true" aria-label="Handwrite math">
+      <section ref={dialogRef} tabIndex={-1} className="lh-card" role="dialog" aria-modal="true" aria-label="Handwrite math">
         <div className="lh-toolbar">
           <div className="lh-group">
             <button type="button" className={`lh-tool ${tool === 'pen' ? 'active' : ''}`} onClick={() => setTool('pen')}>Pen</button>
@@ -156,6 +189,7 @@ export default function HandwritingCanvas({ onClose, onUseImage, onSolve }: Hand
           <canvas
             ref={canvasRef}
             className="lh-canvas"
+            aria-label="Drawing area"
             onPointerDown={startStroke}
             onPointerMove={moveStroke}
             onPointerUp={endStroke}
@@ -163,9 +197,10 @@ export default function HandwritingCanvas({ onClose, onUseImage, onSolve }: Hand
             onPointerLeave={endStroke}
           />
         </div>
+        {message && <p className="lh-message" role="alert">{message}</p>}
         <div className="lh-bottom">
           <button type="button" className="lh-cancel" onClick={onClose}>Cancel</button>
-          <button type="button" className="lh-solve" onClick={solveDrawing} disabled={!hasInk}>Solve this ↗</button>
+          <button type="button" className="lh-solve" onClick={solveDrawing} disabled={penStrokes === 0}>Solve this ↗</button>
         </div>
       </section>
     </div>
