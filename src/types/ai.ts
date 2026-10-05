@@ -28,7 +28,7 @@ export interface RequestOptions {
 
 export class MathDeskAIError extends Error {
   readonly status?: number;
-  readonly code: 'configuration' | 'timeout' | 'http' | 'empty' | 'network';
+  readonly code: 'configuration' | 'timeout' | 'http' | 'empty' | 'network' | 'validation' | 'rate_limit';
 
   constructor(
     message: string,
