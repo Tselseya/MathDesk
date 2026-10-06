@@ -2,25 +2,37 @@ import { useEffect, useRef, useState } from 'react';
 import type { ClipboardEvent, KeyboardEvent, MouseEvent } from 'react';
 import {
   BookOpen,
-  Calculator,
+  ChartNoAxesCombined,
   Camera,
   Coffee,
-  ChevronLeft,
   ChevronRight,
+  House,
+  LayoutGrid,
+  Lightbulb,
   LoaderCircle,
+  Menu,
+  MessageSquareText,
+  PanelLeftClose,
   Paperclip,
   PenLine,
   Plus,
+  Share2,
   Send,
+  Sigma,
+  SquareFunction,
+  SquarePen,
   Sparkles,
+  Target,
   UserRound,
   X,
 } from 'lucide-react';
+import AuthPanel from './AuthPanel';
 import CalculatorPanel from './CalculatorPanel';
 import CameraCapture from './CameraCapture';
 import GraphingTool from './GraphingTool';
 import HandwritingCanvas from './HandwritingCanvas';
 import LessonLibrary from './LessonLibrary';
+import ShareConversationDialog from './ShareConversationDialog';
 import { formatAIReply } from '../lib/formatAIReply';
 import { newId } from '../lib/ids';
 import { ImageRejected, prepareImage, type PreparedImage } from '../lib/images';
@@ -47,8 +59,12 @@ interface ConversationTab {
 interface ChatWorkspaceProps {
   initialMode?: MathDeskMode;
   initialPrompt?: string;
+  autoSendInitialPrompt?: boolean;
+  initialFiles?: File[];
   /** Signed-in user id, or null for anonymous use. The parent remounts this component when it changes. */
   userId: string | null;
+  onNavigateHome?: () => void;
+  onNavigateTools?: () => void;
 }
 
 const PRIMARY_DRAFT_SLOT = 'main';
@@ -64,14 +80,16 @@ const placeholders: Record<MathDeskMode, string> = {
   deskbot: 'Ask Desky how MathDesk works…',
 };
 
-function createConversationTab(scope: string, mode: MathDeskMode, slot?: string, initialPrompt = ''): ConversationTab {
+function createConversationTab(scope: string, mode: MathDeskMode, slot?: string, initialPrompt = '', preferInitialPrompt = false): ConversationTab {
   const tabId = newId();
   const draftSlot = slot ?? tabId;
   let draft = initialPrompt;
-  try {
-    draft = localStorage.getItem(draftKey(scope, draftSlot)) ?? initialPrompt;
-  } catch {
-    // Browser storage may be unavailable in private contexts.
+  if (!preferInitialPrompt) {
+    try {
+      draft = localStorage.getItem(draftKey(scope, draftSlot)) ?? initialPrompt;
+    } catch {
+      // Browser storage may be unavailable in private contexts.
+    }
   }
   return {
     id: tabId,
@@ -90,16 +108,27 @@ function titleForMessage(message: string) {
   return title.slice(0, 40) || 'Image problem';
 }
 
-export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '', userId }: ChatWorkspaceProps) {
+export default function ChatWorkspace({
+  initialMode = 'solve',
+  initialPrompt = '',
+  autoSendInitialPrompt = false,
+  initialFiles = [],
+  userId,
+  onNavigateHome,
+  onNavigateTools,
+}: ChatWorkspaceProps) {
   const scope = scopeOf(userId);
   const [tabs, setTabs] = useState<ConversationTab[]>(() => [
-    createConversationTab(scope, initialMode, PRIMARY_DRAFT_SLOT, initialPrompt),
+    createConversationTab(scope, initialMode, PRIMARY_DRAFT_SLOT, initialPrompt, autoSendInitialPrompt),
   ]);
   const [activeTabId, setActiveTabId] = useState(() => tabs[0].id);
   const [busyTabIds, setBusyTabIds] = useState<Set<string>>(() => new Set());
   const [tool, setTool] = useState<'calculator' | 'graph' | 'handwriting' | 'camera' | 'lessons' | null>(null);
   const [online, setOnline] = useState(navigator.onLine);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [historyReady, setHistoryReady] = useState(!userId);
   const [toolbarOpen, setToolbarOpen] = useState(false);
   const [autoSendPending, setAutoSendPending] = useState(false);
   const [graphFromCalculator, setGraphFromCalculator] = useState(false);
@@ -107,6 +136,8 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const requestsRef = useRef(new Map<string, AbortController>());
   const calculatorTabId = useRef<string | null>(null);
+  const autoSendStartedRef = useRef(false);
+  const initialFilesProcessedRef = useRef(false);
   const tabsRef = useRef(tabs);
   tabsRef.current = tabs;
   const activeTab = tabs.find((tab) => tab.id === activeTabId) ?? tabs[0];
@@ -116,42 +147,54 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
   // so nothing from a previous account can ever be on screen here.
   useEffect(() => {
     let mounted = true;
-    if (!userId) return undefined;
+    setHistoryReady(!userId);
+    if (!userId) {
+      setHistoryReady(true);
+      return undefined;
+    }
     const noticeOnPrimary = (notice: string) => {
       if (mounted) setTabs((current) => current.map((tab, index) => index === 0 ? { ...tab, notice } : tab));
     };
-    loadConversations(userId).then(async (saved) => {
-      if (!mounted) return;
-      if (saved.length > 0) {
-        const restored: ConversationTab[] = saved.map((row) => ({
-          id: row.id,
-          draftSlot: row.id,
-          title: row.title,
-          mode: row.mode,
-          messages: row.messages,
-          draft: '',
-          pendingImages: [],
-          notice: '',
-        }));
-        setTabs((current) => {
-          const primary = current[0];
-          const primaryInUse = primary && (primary.messages.length > 0 || primary.draft.trim() !== '' || primary.pendingImages.length > 0);
-          return primaryInUse ? [primary, ...restored] : restored;
-        });
-        setActiveTabId((currentId) => {
-          const primary = tabsRef.current[0];
-          const primaryInUse = primary && primary.id === currentId && (primary.messages.length > 0 || primary.draft.trim() !== '' || primary.pendingImages.length > 0);
-          return primaryInUse ? currentId : restored[0].id;
-        });
-        return;
+    const restoreHistory = async () => {
+      try {
+        const saved = await loadConversations(userId);
+        if (!mounted) return;
+        if (saved.length > 0) {
+          const restored: ConversationTab[] = saved.map((row) => ({
+            id: row.id,
+            draftSlot: row.id,
+            title: row.title,
+            mode: row.mode,
+            messages: row.messages,
+            draft: '',
+            pendingImages: [],
+            notice: '',
+          }));
+          setTabs((current) => {
+            const primary = current[0];
+            const primaryInUse = primary && (primary.messages.length > 0 || primary.draft.trim() !== '' || primary.pendingImages.length > 0);
+            return primaryInUse ? [primary, ...restored] : restored;
+          });
+          setActiveTabId((currentId) => {
+            const primary = tabsRef.current[0];
+            const primaryInUse = primary && primary.id === currentId && (primary.messages.length > 0 || primary.draft.trim() !== '' || primary.pendingImages.length > 0);
+            return primaryInUse ? currentId : restored[0].id;
+          });
+          return;
+        }
+        const legacy = await loadLegacyHistory(userId);
+        if (!mounted || legacy.length === 0) return;
+        const firstUserMessage = legacy.find((message) => message.role === 'user')?.content ?? '';
+        setTabs((current) => current.map((tab, index) => index === 0 && tab.messages.length === 0
+          ? { ...tab, messages: legacy, title: firstUserMessage ? titleForMessage(firstUserMessage) : 'Recent conversation' }
+          : tab));
+      } catch {
+        noticeOnPrimary('Saved chats could not be loaded. Chatting still works.');
+      } finally {
+        if (mounted) setHistoryReady(true);
       }
-      const legacy = await loadLegacyHistory(userId);
-      if (!mounted || legacy.length === 0) return;
-      const firstUserMessage = legacy.find((message) => message.role === 'user')?.content ?? '';
-      setTabs((current) => current.map((tab, index) => index === 0 && tab.messages.length === 0
-        ? { ...tab, messages: legacy, title: firstUserMessage ? titleForMessage(firstUserMessage) : 'Recent conversation' }
-        : tab));
-    }).catch(() => noticeOnPrimary('Saved chats could not be loaded. Chatting still works.'));
+    };
+    void restoreHistory();
     return () => { mounted = false; };
   }, [userId]);
 
@@ -216,6 +259,12 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
     }
   }
 
+  useEffect(() => {
+    if (!historyReady || initialFiles.length === 0 || initialFilesProcessedRef.current) return;
+    initialFilesProcessedRef.current = true;
+    void addFiles(initialFiles, activeTabId);
+  }, [historyReady, initialFiles, activeTabId]);
+
   function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>) {
     const image = Array.from(event.clipboardData.items)
       .find((item) => item.type.startsWith('image/'))?.getAsFile();
@@ -228,6 +277,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
     if (!tabs.some((tab) => tab.id === tabId)) return;
     setActiveTabId(tabId);
     setToolbarOpen(false);
+    setMobileSidebarOpen(false);
   }
 
   function newConversation() {
@@ -235,6 +285,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
     setTabs((current) => [...current, tab]);
     setActiveTabId(tab.id);
     setToolbarOpen(false);
+    setMobileSidebarOpen(false);
   }
 
   function closeTab(tabId: string, event?: MouseEvent<HTMLButtonElement>) {
@@ -285,6 +336,7 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
     if (next === 'calculator') calculatorTabId.current = activeTabId;
     setTool(next);
     setToolbarOpen(false);
+    setMobileSidebarOpen(false);
   }
 
   function chooseRecentChat(prompt: string) {
@@ -411,18 +463,51 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
     }
   }
 
+  useEffect(() => {
+    if (!autoSendInitialPrompt || autoSendStartedRef.current || !historyReady || !activeTab?.draft.trim()) return;
+    autoSendStartedRef.current = true;
+    void send();
+  }, [autoSendInitialPrompt, historyReady, activeTab?.id, activeTab?.draft]);
+
   if (!activeTab) return null;
   const currentModeLabel = modes.find((item) => item.id === activeTab.mode)?.label || 'Math Assistant';
   const currentBusy = busyTabIds.has(activeTab.id);
 
   return (
     <section
-      className={`legacy-chat-shell restored-chat ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}
+      className={`legacy-chat-shell restored-chat ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}
       aria-label="MathDesk AI chatbox"
     >
-      <aside className="legacy-chat-sidebar">
-        <div className="legacy-sidebar-header"><div className="legacy-sidebar-heading"><h3>AI Math Assistant</h3></div><button type="button" className="legacy-sidebar-toggle" onClick={() => setSidebarCollapsed(true)} aria-label="Collapse sidebar"><ChevronLeft size={19} /></button></div>
+      {mobileSidebarOpen && <button type="button" className="chat-sidebar-scrim" aria-label="Close navigation" onClick={() => setMobileSidebarOpen(false)} />}
+      <aside className="legacy-chat-sidebar" id="chat-navigation">
+        <div className="legacy-sidebar-header">
+          <a className="chat-sidebar-brand" href="/" onClick={(event) => { event.preventDefault(); onNavigateHome?.(); }} aria-label="MathDesk home">
+            <img src="/desky-mascot.webp" alt="" aria-hidden="true" />
+            <span>Math<span>Desk</span></span>
+          </a>
+          <button type="button" className="legacy-sidebar-toggle" onClick={() => setSidebarCollapsed(true)} aria-label="Collapse sidebar" title="Collapse sidebar">
+            <PanelLeftClose size={18} />
+          </button>
+        </div>
+
+        <nav className="chat-primary-nav" aria-label="Workspace navigation">
+          <button type="button" onClick={() => { setMobileSidebarOpen(false); onNavigateHome?.(); }} title="Home">
+            <House size={18} aria-hidden="true" /><span>Home</span>
+          </button>
+          <button type="button" onClick={() => { setMobileSidebarOpen(false); onNavigateTools?.(); }} title="Tools">
+            <LayoutGrid size={18} aria-hidden="true" /><span>Tools</span>
+          </button>
+          <span className="chat-primary-nav-current" aria-current="page" title="AI Chatbox">
+            <MessageSquareText size={18} aria-hidden="true" /><span>AI Chatbox</span>
+          </span>
+        </nav>
+
+        <button type="button" className="legacy-new-conversation" onClick={newConversation} title="New conversation">
+          <SquarePen size={18} aria-hidden="true" /><span>New conversation</span>
+        </button>
+
         <div className="legacy-mode-select">
+          <p className="chat-sidebar-group-label">Learning modes</p>
           {modes.map((item) => (
             <button
               type="button"
@@ -432,26 +517,44 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
               onClick={() => updateTab(activeTab.id, (tab) => ({ ...tab, mode: item.id }))}
             >
               <span className="legacy-mode-icon" aria-hidden="true">
-                {item.id === 'solve' ? '⌕' : item.id === 'learn' ? '▱' : '✎'}
+                {item.id === 'solve' ? <Sigma size={18} /> : item.id === 'learn' ? <Lightbulb size={18} /> : <Target size={18} />}
               </span>
               <span><strong>{item.label}</strong><small>{item.hint}</small></span>
             </button>
           ))}
-          <button type="button" className="legacy-mode-btn" onClick={() => chooseTool('calculator')}>
-            <Calculator size={18} />
+          <button type="button" className="legacy-mode-btn" onClick={() => chooseTool('calculator')} title="Calculator">
+            <SquareFunction size={18} aria-hidden="true" />
             <span><strong>Calculator</strong><small>Compute and send to chat</small></span>
           </button>
         </div>
 
-        <div className="legacy-sidebar-history"><div className="legacy-history-title"><h4>Recent Chats</h4><button type="button" onClick={newConversation} aria-label="New conversation"><Plus size={15} /></button></div>
-          {tabs.filter((tab) => tab.messages.length > 0).map((tab) => <button type="button" className="legacy-history-item" key={tab.id} onClick={() => switchTab(tab.id)}>{tab.title}</button>)}
+        <div className="chat-sidebar-tools">
+          <p className="chat-sidebar-group-label">Tools</p>
+          <button type="button" onClick={() => chooseTool('graph')} title="Graphing">
+            <ChartNoAxesCombined size={18} aria-hidden="true" /><span>Graphing</span>
+          </button>
+          <button type="button" onClick={() => chooseTool('lessons')} title="Saved lessons">
+            <BookOpen size={18} aria-hidden="true" /><span>Saved lessons</span>
+          </button>
+        </div>
+
+        <div className="legacy-sidebar-history">
+          <div className="legacy-history-title"><h4>Recent Chats</h4></div>
+          {tabs.filter((tab) => tab.messages.length > 0).map((tab) => <button type="button" className={`legacy-history-item ${tab.id === activeTab.id ? 'active' : ''}`} key={tab.id} onClick={() => switchTab(tab.id)} title={tab.title}>{tab.title}</button>)}
           {!tabs.some((tab) => tab.messages.length > 0) && <p className="legacy-history-empty">{signedIn ? 'No saved chats yet.' : 'Log in to see your saved chats.'}</p>}
         </div>
-        <div className="legacy-sidebar-bottom"><a className="legacy-support-link" href="https://ko-fi.com/mathdesk" target="_blank" rel="noopener noreferrer"><Coffee size={18} /> Support MathDesk</a></div>
+
+        <div className="legacy-sidebar-bottom">
+          <a className="legacy-support-link" href="https://ko-fi.com/mathdesk" target="_blank" rel="noopener noreferrer"><Coffee size={18} /><span>Support MathDesk</span></a>
+          <AuthPanel compact />
+        </div>
       </aside>
 
       <main className="legacy-chat-main">
         <header className="legacy-chat-header">
+          <button type="button" className="chat-mobile-menu" onClick={() => setMobileSidebarOpen(true)} aria-label="Open navigation" aria-expanded={mobileSidebarOpen} aria-controls="chat-navigation">
+            <Menu size={19} />
+          </button>
           {sidebarCollapsed && (
             <button
               className="legacy-expand-btn"
@@ -464,7 +567,12 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
           <div className="legacy-chat-header-info">
             <div className="legacy-header-title"><div><h3>MathDesk AI</h3><p>Upload or type a problem to get started</p></div></div>
           </div>
-          <span className="legacy-mode-badge">{currentModeLabel}</span>
+          <div className="chat-header-actions">
+            <span className="legacy-mode-badge">{currentModeLabel}</span>
+            <button type="button" className="chat-share-button" onClick={() => setShareOpen(true)} disabled={activeTab.messages.length === 0} title={signedIn ? 'Share a read-only snapshot' : 'Sign in to share this conversation'}>
+              <Share2 size={16} aria-hidden="true" /><span>Share</span>
+            </button>
+          </div>
         </header>
 
         <div className="legacy-tab-bar" role="tablist" aria-label="Conversations">
@@ -613,14 +721,14 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
               {!mathdeskAI.configured ? 'AI is not available right now' : online ? 'AI responses are generated online' : 'Draft saved locally'}
             </span>
           </div>
-          <p className="chat-privacy-note">Your messages and photos are sent to an AI service to write answers. Please don&apos;t share personal information. <a href="./privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a></p>
+          <p className="chat-privacy-note">Your messages and photos are sent to an AI service to write answers. Please don&apos;t share personal information. <a href="./privacy.html" target="_blank" rel="noopener noreferrer">Privacy</a> · <a href="./terms.html" target="_blank" rel="noopener noreferrer">Terms</a></p>
           {toolbarOpen && (
             <div className="legacy-toolbar-popup">
               <button type="button" onClick={() => chooseTool('camera')}><Camera size={17} /> Take a photo</button>
               <button type="button" onClick={() => chooseTool('handwriting')}><PenLine size={17} /> Handwrite math</button>
               <button type="button" onClick={() => { fileInputRef.current?.click(); setToolbarOpen(false); }}><Paperclip size={17} /> Upload from device</button>
               <button type="button" onClick={() => { setToolbarOpen(false); textareaRef.current?.focus(); }}><span>∑</span> Insert math symbols</button>
-              <button type="button" onClick={() => chooseTool('calculator')}><Calculator size={17} /> Open calculator</button>
+              <button type="button" onClick={() => chooseTool('calculator')}><SquareFunction size={17} /> Open calculator</button>
               <button type="button" onClick={() => chooseTool('graph')}><span>⌁</span> Graphing tool</button>
               <button type="button" onClick={() => chooseTool('lessons')}><BookOpen size={17} /> Saved lessons</button>
               <div />
@@ -643,6 +751,13 @@ export default function ChatWorkspace({ initialMode = 'solve', initialPrompt = '
       {tool === 'camera' && <CameraCapture onClose={() => setTool(null)} onUseImage={useImage} />}
       {tool === 'lessons' && (
         <LessonLibrary onClose={() => setTool(null)} initialContent={activeTab.draft} userId={userId} />
+      )}
+      {shareOpen && (
+        <ShareConversationDialog
+          userId={userId}
+          conversation={{ id: activeTab.id, title: activeTab.title, mode: activeTab.mode, messages: activeTab.messages }}
+          onClose={() => setShareOpen(false)}
+        />
       )}
     </section>
   );

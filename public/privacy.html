@@ -30,7 +30,7 @@
     <header><a href="/">Math<span>Desk</span></a></header>
     <main>
       <h1>Privacy Policy</h1>
-      <p class="meta">Last updated: 5 October 2026</p>
+      <p class="meta">Last updated: 7 October 2026</p>
       <p>MathDesk is a free math-help website. This page explains what we collect, who processes it, how long we keep it, and how you can access or delete it. Questions or requests: <a href="mailto:chelseaandrea99@gmail.com">chelseaandrea99@gmail.com</a>.</p>
 
       <h2>What you can use without an account</h2>
@@ -40,10 +40,14 @@
       <ul>
         <li><strong>Account details (only if you sign up):</strong> your name, email address and a password (stored only as a secure hash by our sign-in provider).</li>
         <li><strong>Saved chats and lessons (only if logged in):</strong> the text of your conversations and any lessons you save, so you can see them on your devices.</li>
+        <li><strong>Shared conversation snapshots (only if you create a share link):</strong> a copy of the conversation title, mode and text messages at the time you share it. Uploaded photos and files are not included. We store a hash of the random link token, not the token itself.</li>
         <li><strong>What you send to the AI:</strong> the text you type, math you handwrite, calculator expressions you press Solve on, and any photo you choose to take or upload. Photos and drawings are used only to produce the answer. They are <em>not</em> saved to your account, and we do not keep image data in your chat history.</li>
         <li><strong>Technical data:</strong> your IP address and basic request information reach our hosting and AI workflow when you use the site. We use your IP address briefly to limit abuse (rate limiting). Those counters are kept for up to 24 hours.</li>
       </ul>
       <p>We do not run advertising, do not sell your data, and do not use analytics or advertising cookies.</p>
+
+      <h2>Conversation sharing</h2>
+      <p>Sharing is optional. A share link lets any signed-in MathDesk user who has that link view a read-only snapshot; it does not grant access to your account or other conversations. The link stops working after 30 days or sooner if you revoke it. A snapshot is fixed when created, so later messages are not added. People who can view it may copy the text or take a screenshot.</p>
 
       <h2>Camera and uploads</h2>
       <p>The camera only starts after you allow it in your browser, and only on the capture screen. A photo is sent to the AI only when you press send. Please do not photograph people, IDs, or anything personal; crop to just the math problem.</p>
@@ -51,6 +55,7 @@
       <h2>Who processes your data</h2>
       <ul>
         <li><strong>Supabase</strong>: sign-in and the database for logged-in users&apos; chats and lessons.</li>
+        <li><strong>Supabase</strong>: stores an optional text-only shared snapshot when you create a conversation link.</li>
         <li><strong>Our AI workflow (n8n)</strong>, reached through a secure tunnel, and <strong>Groq</strong>: the AI model provider that receives your question (and photo, if any) to write the answer. The workflow is set not to keep request contents in its history.</li>
         <li><strong>GitHub Pages</strong>: hosts the website and may keep standard server logs.</li>
         <li><strong>GeoGebra</strong>: if you open the graphing tool, GeoGebra loads inside the page and receives your browser information under its own policy.</li>
@@ -63,6 +68,7 @@
       <h2>How long we keep things</h2>
       <ul>
         <li>Saved chats: until you close that conversation tab (which deletes the saved copy) or delete your account.</li>
+        <li>Shared snapshots: until you revoke the link, delete the source conversation, or delete your account. A link expires after 30 days; expiry stops access but does not by itself delete the snapshot.</li>
         <li>Saved lessons: until you delete them or delete your account.</li>
         <li>Account: until you delete it.</li>
         <li>Rate-limit counters: up to 24 hours.</li>
@@ -71,6 +77,7 @@
       <h2>Your choices</h2>
       <ul>
         <li><strong>Download your data</strong> and <strong>delete your account</strong> from the &ldquo;Signed in as &hellip;&rdquo; menu while logged in. Deleting removes your account, saved chats and saved lessons.</li>
+        <li><strong>Revoke a share link</strong> from that conversation&apos;s share controls. Revoking removes the stored snapshot and prevents the link from opening.</li>
         <li><strong>Forgot your password?</strong> Use &ldquo;Forgot your password?&rdquo; on the log-in screen.</li>
         <li>Email us at <a href="mailto:chelseaandrea99@gmail.com">chelseaandrea99@gmail.com</a> for any other request, including help if you cannot sign in.</li>
       </ul>
