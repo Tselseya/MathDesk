@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Volume2, VolumeX } from 'lucide-react';
+import { rotationDeltaForPointer } from '../lib/homepageInteractions';
 
 type Particle = {
   x: number;
@@ -437,8 +438,9 @@ export default function DeskyParticleLogo() {
       if (!pointer.down || event.pointerId !== pointer.pointerId) return;
       const deltaX = event.clientX - pointer.lastX;
       const deltaY = event.clientY - pointer.lastY;
-      targetYaw += deltaX * 0.009;
-      targetPitch += deltaY * 0.009;
+      const rotation = rotationDeltaForPointer(deltaX, deltaY);
+      targetYaw += rotation.yaw;
+      targetPitch += rotation.pitch;
       pointer.lastX = event.clientX;
       pointer.lastY = event.clientY;
       const movement = Math.hypot(deltaX, deltaY);

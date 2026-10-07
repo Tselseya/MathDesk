@@ -33,6 +33,7 @@ import GraphingTool from './GraphingTool';
 import HandwritingCanvas from './HandwritingCanvas';
 import LessonLibrary from './LessonLibrary';
 import ShareConversationDialog from './ShareConversationDialog';
+import ThemeToggle from './ThemeToggle';
 import { formatAIReply } from '../lib/formatAIReply';
 import { newId } from '../lib/ids';
 import { ImageRejected, prepareImage, type PreparedImage } from '../lib/images';
@@ -569,6 +570,7 @@ export default function ChatWorkspace({
           </div>
           <div className="chat-header-actions">
             <span className="legacy-mode-badge">{currentModeLabel}</span>
+            <ThemeToggle />
             <button type="button" className="chat-share-button" onClick={() => setShareOpen(true)} disabled={activeTab.messages.length === 0} title={signedIn ? 'Share a read-only snapshot' : 'Sign in to share this conversation'}>
               <Share2 size={16} aria-hidden="true" /><span>Share</span>
             </button>
