@@ -15,6 +15,7 @@ import {
   supabaseConfigured,
   updatePassword,
 } from '../services/supabase';
+import AccountPopover from './AccountPopover';
 
 interface AuthPanelProps { compact?: boolean; }
 type Mode = 'login' | 'signup' | 'forgot' | 'recovery' | 'account';
@@ -272,10 +273,17 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
   </div> : null;
 
   if (userLabel) return <>
-    <button type="button" className={`auth-session${compact ? ' compact' : ''}`} title={`${userLabel}: account settings`} onClick={() => { switchMode('account'); setOpen(true); }}>Signed in as {userLabel}</button>
-    <button type="button" className="auth-button signed-in" onClick={logout} disabled={busy} aria-label="Sign out of MathDesk">
-      <LogOut size={15} /> {busy ? 'Signing out…' : 'Sign out'}
-    </button>
+    {compact ? <AccountPopover
+      label={userLabel}
+      busy={busy}
+      onOpenAccount={() => { switchMode('account'); setOpen(true); }}
+      onLogout={() => void logout()}
+    /> : <>
+      <button type="button" className="auth-session" title={`${userLabel}: account settings`} onClick={() => { switchMode('account'); setOpen(true); }}>Signed in as {userLabel}</button>
+      <button type="button" className="auth-button signed-in" onClick={() => void logout()} disabled={busy} aria-label="Sign out of MathDesk">
+        <LogOut size={15} /> {busy ? 'Signing out…' : 'Sign out'}
+      </button>
+    </>}
     {notice && !open && <span className="auth-inline-notice" role="alert">{notice}</span>}
     {dialog && createPortal(dialog, document.body)}
   </>;

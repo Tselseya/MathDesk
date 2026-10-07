@@ -21,6 +21,8 @@ import SamplePromptCarousel from './components/SamplePromptCarousel';
 import SharedConversationPage from './components/SharedConversationPage';
 import VisitorCounterBadge from './components/VisitorCounterBadge';
 import ToolsDirectory from './components/ToolsDirectory';
+import { ThemeProvider } from './components/ThemeProvider';
+import ThemeToggle from './components/ThemeToggle';
 import { useAuthUser } from './hooks/useAuthUser';
 import { mathdeskAI } from './services/mathdeskAI';
 import type { MathDeskMode } from './types/ai';
@@ -43,7 +45,7 @@ function initialShareToken() {
   try { return sessionStorage.getItem(PENDING_SHARE_KEY) || ''; } catch { return ''; }
 }
 
-export default function App() {
+function AppContent() {
   const { ready: authReady, userId } = useAuthUser();
   const [workspaceOpen, setWorkspaceOpen] = useState(false);
   const [mode, setMode] = useState<MathDeskMode>('solve');
@@ -189,6 +191,7 @@ export default function App() {
           <button className="home-nav-link" type="button" onClick={navigateTools}>Tools</button>
           <button className="home-nav-link" type="button" onClick={() => openWorkspace(mode, prompt)}>AI Chatbox</button>
           <MotionToggle />
+          <ThemeToggle />
           <AuthPanel compact />
         </div>
       </nav>
@@ -307,5 +310,13 @@ export default function App() {
       />
       <VisitorCounterBadge />
     </main>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppContent />
+    </ThemeProvider>
   );
 }

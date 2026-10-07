@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { isRippleTargetExcluded } from '../lib/homepageInteractions';
 
 type Ripple = {
   x: number;
@@ -10,26 +11,6 @@ type Ripple = {
 
 const MAX_RIPPLES = 6;
 const RIPPLE_DURATION = 1250;
-const EXCLUDED_TARGETS = [
-  'a',
-  'button',
-  'input',
-  'textarea',
-  'select',
-  'summary',
-  '[role="button"]',
-  '[role="tab"]',
-  '[data-ripple]',
-  '.desky-stage',
-  '.desky-sound-toggle',
-  '.workspace-card',
-  '.sample-prompt-card',
-  '.feature-card',
-  '.resource-card',
-  '.tool-card',
-  '.footer-contact-links',
-].join(', ');
-
 function clamp(value: number, minimum: number, maximum: number) {
   return Math.min(maximum, Math.max(minimum, value));
 }
@@ -119,7 +100,7 @@ export default function BackgroundClickWave() {
       if (!enabled || event.button !== 0 || event.detail === 0) return;
       const target = event.target;
       if (!(target instanceof Element) || !shell!.contains(target)) return;
-      if (target.closest(EXCLUDED_TARGETS)) return;
+      if (isRippleTargetExcluded(target)) return;
 
       ripples.push({
         x: event.clientX,

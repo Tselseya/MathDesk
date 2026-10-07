@@ -1,12 +1,12 @@
 // MathDesk service worker.
 // - Page navigations always go to the network first, so an old shell can never request removed hashed bundles.
-// - Only the hashed build output (/assets/) and app icons are served cache-first.
-// - Everything else (legal pages, manifest, sitemap, ...) is network-first, so edits show up without a manual cache clear.
+// - Only the hashed build output (/assets/) is served cache-first.
+// - Everything else, including the HTML shell, legal pages, manifest, and public data, is network-first and not cached.
 // - Cross-origin requests (Supabase, the AI endpoint, GeoGebra) and non-GET requests are never touched or cached.
 // Bump CACHE_VERSION to drop every older cache on the next visit.
-const CACHE_VERSION = 'mathdesk-v3';
-const SHELL = ['./', './index.html', './site.webmanifest', './favicon-96x96.png'];
-const CACHE_FIRST = /\/(assets\/|favicon|apple-touch-icon|web-app-manifest|desky-avatar)/;
+const CACHE_VERSION = 'mathdesk-v4';
+const SHELL = [];
+const CACHE_FIRST = /\/assets\//;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_VERSION).then((cache) => cache.addAll(SHELL)).then(() => self.skipWaiting()));
@@ -36,11 +36,7 @@ self.addEventListener('fetch', (event) => {
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request, { cache: 'no-store' })
-        .then((response) => {
-          if (response.ok && (url.pathname === '/' || url.pathname.endsWith('/index.html'))) remember(event, './index.html', response.clone());
-          return response;
-        })
-        .catch(() => caches.match('./index.html')),
+        .catch(() => Response.error()),
     );
     return;
   }
@@ -50,5 +46,5 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  event.respondWith(fetch(request).then((response) => remember(event, request, response)).catch(() => caches.match(request)));
+  event.respondWith(fetch(request).catch(() => Response.error()));
 });
