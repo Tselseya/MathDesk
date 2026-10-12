@@ -2,24 +2,17 @@ import { defineConfig, loadEnv } from 'vite';
 import type { Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 
-function originOf(value: string | undefined) {
-  try {
-    return value ? new URL(value).origin : '';
-  } catch {
-    return '';
-  }
-}
-
 /**
  * GitHub Pages cannot send security headers, so the production build embeds a Content-Security-Policy <meta> tag.
  * It is generated from the same VITE_* values the app is built with, so the allowed network hosts always match.
  * (Production build only: the dev server needs inline scripts, so it is left alone.)
  */
 function contentSecurityPolicy(env: Record<string, string>): Plugin {
-  const supabase = originOf(env.VITE_SUPABASE_URL);
+  const supabase = (() => {
+    try { return env.VITE_SUPABASE_URL ? new URL(env.VITE_SUPABASE_URL).origin : ''; } catch { return ''; }
+  })();
   const supabaseSocket = supabase.replace(/^https:/, 'wss:');
-  const ai = [originOf(env.VITE_MATHDESK_API_URL), originOf(env.VITE_N8N_WEBHOOK_URL)];
-  const connect = ["'self'", supabase, supabaseSocket, ...ai].filter(Boolean);
+  const connect = ["'self'", supabase, supabaseSocket, 'https://api.pwnedpasswords.com'].filter(Boolean);
   const policy = [
     "default-src 'self'",
     "script-src 'self'",

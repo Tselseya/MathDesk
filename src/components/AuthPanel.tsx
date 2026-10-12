@@ -15,6 +15,8 @@ import {
   supabaseConfigured,
   updatePassword,
 } from '../services/supabase';
+import { checkPasswordAgainstBreaches } from '../lib/passwordSecurity';
+import AccountPopover from './AccountPopover';
 
 interface AuthPanelProps { compact?: boolean; }
 type Mode = 'login' | 'signup' | 'forgot' | 'recovery' | 'account';
@@ -101,6 +103,18 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     setDeleteText('');
   }
 
+  async function passwordAllowed(candidate: string) {
+    setBusy(true);
+    setNotice('Checking password security…');
+    const status = await checkPasswordAgainstBreaches(candidate);
+    if (status === 'compromised') {
+      setBusy(false);
+      setNotice('Choose a different password. This one appears in known breach data.');
+      return false;
+    }
+    return true;
+  }
+
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!supabaseConfigured) { setNotice('Sign-in is temporarily unavailable. Please try again later.'); return; }
@@ -117,6 +131,7 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     if (mode === 'recovery') {
       if (password.length < MIN_PASSWORD) { setNotice(`Use a password with at least ${MIN_PASSWORD} characters.`); return; }
       if (password !== confirm) { setNotice('The two passwords do not match.'); return; }
+      if (!(await passwordAllowed(password))) return;
       setBusy(true); setNotice('');
       try {
         const { error } = await updatePassword(password);
@@ -137,6 +152,7 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     if (mode === 'signup' && password.length < MIN_PASSWORD) {
       setNotice(`Use a password with at least ${MIN_PASSWORD} characters.`); return;
     }
+    if (mode === 'signup' && !(await passwordAllowed(password))) return;
     setBusy(true); setNotice('');
     try {
       if (mode === 'signup') {
@@ -272,10 +288,17 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
   </div> : null;
 
   if (userLabel) return <>
-    <button type="button" className={`auth-session${compact ? ' compact' : ''}`} title={`${userLabel}: account settings`} onClick={() => { switchMode('account'); setOpen(true); }}>Signed in as {userLabel}</button>
-    <button type="button" className="auth-button signed-in" onClick={logout} disabled={busy} aria-label="Sign out of MathDesk">
-      <LogOut size={15} /> {busy ? 'Signing out…' : 'Sign out'}
-    </button>
+    {compact ? <AccountPopover
+      label={userLabel}
+      busy={busy}
+      onOpenAccount={() => { switchMode('account'); setOpen(true); }}
+      onLogout={() => void logout()}
+    /> : <>
+      <button type="button" className="auth-session" title={`${userLabel}: account settings`} onClick={() => { switchMode('account'); setOpen(true); }}>Signed in as {userLabel}</button>
+      <button type="button" className="auth-button signed-in" onClick={() => void logout()} disabled={busy} aria-label="Sign out of MathDesk">
+        <LogOut size={15} /> {busy ? 'Signing out…' : 'Sign out'}
+      </button>
+    </>}
     {notice && !open && <span className="auth-inline-notice" role="alert">{notice}</span>}
     {dialog && createPortal(dialog, document.body)}
   </>;
