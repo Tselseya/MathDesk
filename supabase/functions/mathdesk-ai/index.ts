@@ -109,7 +109,7 @@ async function consumeRateLimit(userId: string, hasImages: boolean) {
   const admin = createClient(supabaseUrl, serviceKey);
   const { data, error } = await admin.rpc('consume_ai_rate_limit', { p_user_id: userId, p_has_images: hasImages });
   if (error) throw error;
-  return data as { allowed: boolean; retry_after: number; used: number };
+  return data as { allowed: boolean; scope: 'user' | 'global' | 'none'; retry_after: number; used: number };
 }
 
 async function callGroq(request: MathDeskRequest) {
@@ -144,7 +144,13 @@ Deno.serve(async (req) => {
     const userId = await getUserId(req);
     const request = validateRequest(await req.json());
     const limit = await consumeRateLimit(userId, Boolean(request.images?.length));
-    if (!limit.allowed) return json(origin, { error: 'Too many requests.' }, 429, { 'Retry-After': String(limit.retry_after || 60) });
+    if (!limit.allowed) {
+      const retryAfter = String(limit.retry_after || 60);
+      if (limit.scope === 'global') {
+        return json(origin, { error: 'MathDesk AI has reached its daily capacity. Please try again tomorrow.' }, 429, { 'Retry-After': retryAfter });
+      }
+      return json(origin, { error: 'Too many requests.' }, 429, { 'Retry-After': retryAfter });
+    }
     return json(origin, { reply: await callGroq(request) });
   } catch (error) {
     if (error instanceof HttpError) return json(origin, { error: error.message }, error.status);
