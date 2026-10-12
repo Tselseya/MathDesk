@@ -30,18 +30,18 @@
     <header><a href="/">Math<span>Desk</span></a></header>
     <main>
       <h1>Privacy Policy</h1>
-      <p class="meta">Last updated: 5 October 2026</p>
-      <p>MathDesk is a free math-help website. This page explains what we collect, who processes it, how long we keep it, and how you can access or delete it. Questions or requests: <a href="mailto:chelseaandrea99@gmail.com">chelseaandrea99@gmail.com</a>.</p>
+      <p class="meta">Last updated: 12 October 2026</p>
+      <p>MathDesk is a free math-help website. This page explains what we collect, who processes it, how long we keep it, and how you can access or delete it. Questions or requests: <a href="mailto:mathdesk.team@gmail.com">mathdesk.team@gmail.com</a>.</p>
 
       <h2>What you can use without an account</h2>
-      <p>You can ask the AI questions without logging in. Anonymous chats are not saved to our database. Your unsent draft and any lessons you save while logged out stay in your own browser (local storage) on your own device.</p>
+      <p>You can browse MathDesk without an account. AI access requires a signed-in Supabase account. Your unsent draft and any lessons you save while logged out stay in your own browser (local storage) on your own device.</p>
 
       <h2>What we collect</h2>
       <ul>
-        <li><strong>Account details (only if you sign up):</strong> your name, email address and a password (stored only as a secure hash by our sign-in provider).</li>
+        <li><strong>Account details (only if you sign up):</strong> your name, email address and a password (stored only as a secure hash by our sign-in provider). Before signup or password recovery, MathDesk checks the password against known breach data using a k-anonymous hash prefix; the password itself is never sent.</li>
         <li><strong>Saved chats and lessons (only if logged in):</strong> the text of your conversations and any lessons you save, so you can see them on your devices.</li>
         <li><strong>What you send to the AI:</strong> the text you type, math you handwrite, calculator expressions you press Solve on, and any photo you choose to take or upload. Photos and drawings are used only to produce the answer. They are <em>not</em> saved to your account, and we do not keep image data in your chat history.</li>
-        <li><strong>Technical data:</strong> your IP address and basic request information reach our hosting and AI workflow when you use the site. We use your IP address briefly to limit abuse (rate limiting). Those counters are kept for up to 24 hours.</li>
+        <li><strong>Technical data:</strong> basic request information reaches our hosting and AI services when you use the site. MathDesk uses your signed-in account identifier to enforce per-account rate limits. Those counters are kept for up to 24 hours.</li>
       </ul>
       <p>We do not run advertising, do not sell your data, and do not use analytics or advertising cookies.</p>
 
@@ -51,9 +51,11 @@
       <h2>Who processes your data</h2>
       <ul>
         <li><strong>Supabase</strong>: sign-in and the database for logged-in users&apos; chats and lessons.</li>
-        <li><strong>Our AI workflow (n8n)</strong>, reached through a secure tunnel, and <strong>Groq</strong>: the AI model provider that receives your question (and photo, if any) to write the answer. The workflow is set not to keep request contents in its history.</li>
+        <li><strong>Supabase Edge Functions</strong>: the authenticated server-side gateway that validates requests and enforces rate limits.</li>
+        <li><strong>Groq</strong>: the AI model provider that receives your question (and photo, if any) to write the answer. The provider key is kept server-side and is not exposed to your browser.</li>
         <li><strong>GitHub Pages</strong>: hosts the website and may keep standard server logs.</li>
         <li><strong>GeoGebra</strong>: if you open the graphing tool, GeoGebra loads inside the page and receives your browser information under its own policy.</li>
+        <li><strong>Have I Been Pwned</strong>: when you create or change a password, MathDesk sends only the first five characters of that password&apos;s SHA-1 hash to the HIBP range API to identify compromised passwords. It does not receive your full password or the full hash.</li>
         <li>Outbound links (for example Ko-fi or the learning resources in the Tools page) are governed by those sites&apos; own policies.</li>
       </ul>
 
@@ -72,7 +74,7 @@
       <ul>
         <li><strong>Download your data</strong> and <strong>delete your account</strong> from the &ldquo;Signed in as &hellip;&rdquo; menu while logged in. Deleting removes your account, saved chats and saved lessons.</li>
         <li><strong>Forgot your password?</strong> Use &ldquo;Forgot your password?&rdquo; on the log-in screen.</li>
-        <li>Email us at <a href="mailto:chelseaandrea99@gmail.com">chelseaandrea99@gmail.com</a> for any other request, including help if you cannot sign in.</li>
+        <li>Email us at <a href="mailto:mathdesk.team@gmail.com">mathdesk.team@gmail.com</a> for any other request, including help if you cannot sign in.</li>
       </ul>
 
       <h2>Children</h2>

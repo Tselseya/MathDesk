@@ -1,27 +1,21 @@
-# MathDesk Redesign
+# MathDesk particle redesign handoff
 
-This branch contains the Phase 1 React/Vite foundation for the MathDesk redesign. The stable single-file application is preserved at `legacy/index.html` on this branch and remains unchanged on `main`.
-
-## Branch safety
-
-- `main` remains the current stable deployment branch.
-- `redesign` contains the new React application.
-- The old interface is archived at `legacy/index.html` in this branch for reference during migration.
-- Do not merge this branch into `main` until the existing feature set has been reconnected and tested.
+This branch restores the 7 October Particle Desky redesign and carries the security hardening needed before production deployment.
 
 ## Local setup
 
 ```bash
-npm install
+npm ci
 cp .env.example .env.local
+# Set only VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY for local development.
 npm run dev
 ```
 
-Set `VITE_N8N_WEBHOOK_URL` in `.env.local` to the currently reachable n8n webhook. Do not commit `.env.local` or a real endpoint containing private infrastructure details.
+Never commit `.env.local`, a Groq key, a Supabase service-role key, or a local n8n/ngrok endpoint.
 
 ## AI adapter
 
-The UI should use `src/services/mathdeskAI.ts` rather than calling `fetch` directly. The adapter currently preserves the existing n8n contract:
+The UI uses `src/services/mathdeskAI.ts`; React components do not call a provider directly. The adapter invokes `supabase.functions.invoke('mathdesk-ai')` with this payload shape:
 
 ```json
 {
@@ -32,48 +26,30 @@ The UI should use `src/services/mathdeskAI.ts` rather than calling `fetch` direc
 }
 ```
 
-Supported modes are `solve`, `learn`, `practice`, and `deskbot`. The existing workflow returns `text/plain`; the adapter validates HTTP errors, empty responses, network failures, caller cancellation, and the existing 60-second timeout.
+Supported modes are `solve`, `learn`, `practice`, and `deskbot`. AI access requires a signed-in Supabase account. The Edge Function validates the JWT and request body, enforces durable per-user/global quotas, calls Groq with the server-only `GROQ_API_KEY`, and returns `{ "reply": "..." }`. The browser never receives provider credentials or a local n8n/ngrok URL.
 
-Endpoint precedence is:
-
-1. `VITE_MATHDESK_API_URL` — future stable API gateway
-2. `VITE_N8N_WEBHOOK_URL` — current local n8n / tunnel endpoint
-
-This allows the endpoint to migrate without changing React components or packaged clients.
+See [`docs/EDGE-FUNCTION-SETUP.md`](docs/EDGE-FUNCTION-SETUP.md) for deployment and verification.
 
 ## Validation
 
 ```bash
 npm run check
+npm test
 npm run build
+npm audit --omit=dev --audit-level=high
 ```
 
-## Phase 4 capabilities
+## Product capabilities
 
-The redesign now includes a camera capture modal with permission/error fallback, camera switching, capture preview, retake, and upload-to-chat behavior. Camera tracks are stopped when the modal closes or unmounts.
+- Particle Desky hero with anchored drag/orbit correction.
+- Graph-paper background with floating math symbols and decorative orbit layers suppressed.
+- Background-only click ripples, cursor particles, staged entrance transitions, and reduced-motion support.
+- Persistent AI workspace with responsive drawer/rail behavior, tools, camera capture, uploads, drafts, chat history, graphing, calculator handoff, and saved lessons.
+- Supabase Auth with HIBP k-anonymity checks during signup and password recovery.
+- Local-first lessons with cloud synchronization for authenticated users.
+- Versioned static-asset service-worker caching; dynamic/auth/API responses are not cached.
+- PWA manifest, offline shell, and explicit offline state that prevents pretending AI is available offline.
 
-The app shell is installable as a PWA. `public/sw.js` caches the local app shell and same-origin static assets. AI requests remain online-only; the offline shell does not pretend to provide local AI.
+## Release gate
 
-Chat drafts are stored under `mathdesk:draft:main` in browser storage and cleared only after a successful send attempt is accepted into the local conversation. The chat shows online/offline status and prevents new AI requests while offline.
-
-The Motion toggle persists under `mathdesk:reduce-motion` and applies an explicit reduced-motion mode in addition to the system `prefers-reduced-motion` media query.
-
-## Phase 5 capabilities
-
-Authentication remains optional for guests, while authenticated users receive session-aware loading of chat history. The active workspace refreshes its cloud history when a user signs in without requiring a page reload.
-
-Saved lessons use a local-first model. Lessons are available immediately in browser storage and are synchronized to Supabase when an authenticated session and network connection are available. The library supports creating, listing, and deleting lessons and clearly distinguishes device-local records from cloud-synced records.
-
-The SQL required for the cloud layer is stored in `supabase/migrations/20260918_phase5_cloud_sync.sql`. It is additive and compatible with the legacy `chat_history` table, including its identity key and existing unique `user_id` constraint.
-
-## Phase 6 readiness
-
-The Supabase migration has been applied to the healthy MathDesk project and both `chat_history` and `saved_lessons` have row-level security enabled. The pre-existing chat table was detected and preserved; the compatibility update is recorded in `supabase/migrations/20260919_phase6_chat_history_compat.sql`. The production bundle builds successfully and the local preview serves the app shell, manifest, and service worker. The main JavaScript bundle is approximately 273 KB raw / 86 KB gzip, while the redesign no longer ships the former 1.9 MB embedded-PNG favicon.
-
-The branch is ready for review, but merging should still be followed by a staging smoke test against the deployed n8n endpoint, Supabase authentication, chat-history save/load, saved lessons, camera permission flow, and PWA install behavior.
-
-## Interface restoration and motion layer
-
-The AI workspace now restores the former MathDesk interaction model: a persistent left assistant sidebar, Solve/Learn/Practice/Calculator modes, recent-chat shortcuts, a conversation tab, upload strip, plus-tool menu, camera action, familiar composer, and saved-lessons access. The current React service adapters remain underneath this visual layer, so n8n requests, Supabase history, drafts, uploads, camera capture, handwriting, graphing, calculator handoff, and lesson sync are preserved.
-
-The homepage and workspace use restrained motion inspired by the BrewedOps portfolio: staged entrance transitions, scroll-triggered feature reveals, a slow math-symbol drift, a small marquee strip, orbiting empty-state symbols, active online indicators, lift-on-hover cards, and animated message/tool entry. Motion is disabled or reduced through the existing reduced-motion setting and the system `prefers-reduced-motion` preference. The animation layer intentionally avoids continuous movement inside instructional text or message content.
+Do not merge or publish until the Edge Function deployment, rate-limit migration, authenticated AI test matrix, Supabase auth/email tests, and live smoke test are complete. After deployment, remove obsolete GitHub Actions secrets `VITE_N8N_WEBHOOK_URL` and `VITE_MATHDESK_API_URL`.

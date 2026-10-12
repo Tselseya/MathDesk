@@ -13,12 +13,13 @@ import {
   MAX_PROMPT_CHARS,
   MAX_TOTAL_IMAGE_BYTES,
 } from '../lib/limits';
+import { currentUserId, supabase, supabaseConfigured } from './supabase';
 
 const DEFAULT_TIMEOUT_MS = 60_000;
 const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
 const MODES: MathDeskMode[] = ['solve', 'learn', 'practice', 'deskbot'];
 
-/** Rejects oversized or malformed requests before they leave the browser. The n8n guard repeats these checks. */
+/** Rejects oversized or malformed requests before they leave the browser. The Edge Function repeats these checks. */
 export function validateRequest(request: MathDeskRequest) {
   const fail = (message: string) => { throw new MathDeskAIError(message, 'validation'); };
   if (!MODES.includes(request.mode)) fail('Unknown request type.');
@@ -38,67 +39,52 @@ export function validateRequest(request: MathDeskRequest) {
 }
 
 function messageForStatus(status: number) {
+  if (status === 401) return 'Please sign in to use MathDesk AI.';
   if (status === 429) return 'MathDesk is getting a lot of requests right now. Please wait a few minutes and try again.';
   if (status === 413) return 'That message or image is too large. Try something shorter or a smaller image.';
   if (status === 400 || status === 422) return 'That request could not be processed. Please check your message and try again.';
   return 'MathDesk AI is having trouble right now. Please try again in a moment.';
 }
 
-/**
- * The adapter deliberately owns transport details so UI components never need
- * to know whether MathDesk is using local n8n, a Cloudflare Tunnel, or a
- * future hosted API gateway.
- */
-export class N8nMathDeskAI implements MathDeskAIClient {
-  private readonly endpoint: string;
+/** The browser only invokes the authenticated Supabase Function. Provider credentials stay server-side. */
+export class SupabaseMathDeskAI implements MathDeskAIClient {
   private readonly defaultTimeoutMs: number;
 
-  constructor(
-    endpoint = import.meta.env.VITE_MATHDESK_API_URL || import.meta.env.VITE_N8N_WEBHOOK_URL || '',
-    defaultTimeoutMs = DEFAULT_TIMEOUT_MS,
-  ) {
-    this.endpoint = endpoint;
+  constructor(defaultTimeoutMs = DEFAULT_TIMEOUT_MS) {
     this.defaultTimeoutMs = defaultTimeoutMs;
   }
 
-  /** Lets the UI show an honest status instead of a hard-coded "online". */
+  /** Reports whether the public Supabase client is configured; authentication is checked per request. */
   get configured() {
-    return Boolean(this.endpoint);
+    return supabaseConfigured && Boolean(supabase);
   }
 
-  async request(
-    request: MathDeskRequest,
-    options: RequestOptions = {},
-  ): Promise<string> {
-    if (!this.endpoint) {
+  async request(request: MathDeskRequest, options: RequestOptions = {}): Promise<string> {
+    if (!this.configured) {
       throw new MathDeskAIError('MathDesk AI is not available right now. Please try again later.', 'configuration');
     }
     validateRequest(request);
+    if (!(await currentUserId())) {
+      throw new MathDeskAIError('Please sign in to use MathDesk AI.', 'configuration');
+    }
 
     const controller = new AbortController();
     const timeoutMs = options.timeoutMs ?? this.defaultTimeoutMs;
     const timeoutId = window.setTimeout(() => controller.abort(), timeoutMs);
-
     const abortFromCaller = () => controller.abort();
     options.signal?.addEventListener('abort', abortFromCaller, { once: true });
 
     try {
-      const response = await fetch(this.endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(request),
+      const result = await supabase!.functions.invoke<{ reply?: string; error?: string }>('mathdesk-ai', {
+        body: request,
         signal: controller.signal,
       });
-
-      if (!response.ok) {
-        throw new MathDeskAIError(messageForStatus(response.status), response.status === 429 ? 'rate_limit' : 'http', response.status);
+      if (result.error) {
+        const status = Number((result.error as { context?: Response }).context?.status || 502);
+        throw new MathDeskAIError(messageForStatus(status), status === 429 ? 'rate_limit' : 'http', status);
       }
-
-      const reply = (await response.text()).trim();
-      if (!reply) {
-        throw new MathDeskAIError('MathDesk AI did not send an answer. Please try again.', 'empty');
-      }
-
+      const reply = String(result.data?.reply || '').trim();
+      if (!reply) throw new MathDeskAIError('MathDesk AI did not send an answer. Please try again.', 'empty');
       return reply;
     } catch (error) {
       if (error instanceof MathDeskAIError) throw error;
@@ -116,30 +102,13 @@ export class N8nMathDeskAI implements MathDeskAIClient {
     }
   }
 
-  private requestMode(
-    message: string,
-    mode: MathDeskMode,
-    extraData: Record<string, unknown> = {},
-    options?: RequestOptions,
-  ) {
+  private requestMode(message: string, mode: MathDeskMode, extraData: Record<string, unknown> = {}, options?: RequestOptions) {
     return this.request({ message, mode, ...extraData }, options);
   }
-
-  solve(message: string, extraData: Record<string, unknown> = {}, options?: RequestOptions) {
-    return this.requestMode(message, 'solve', extraData, options);
-  }
-
-  learn(message: string, extraData: Record<string, unknown> = {}, options?: RequestOptions) {
-    return this.requestMode(message, 'learn', extraData, options);
-  }
-
-  practice(message: string, extraData: Record<string, unknown> = {}, options?: RequestOptions) {
-    return this.requestMode(message, 'practice', extraData, options);
-  }
-
-  askDesky(message: string, extraData: Record<string, unknown> = {}, options?: RequestOptions) {
-    return this.requestMode(message, 'deskbot', extraData, options);
-  }
+  solve(message: string, extraData: Record<string, unknown> = {}, options?: RequestOptions) { return this.requestMode(message, 'solve', extraData, options); }
+  learn(message: string, extraData: Record<string, unknown> = {}, options?: RequestOptions) { return this.requestMode(message, 'learn', extraData, options); }
+  practice(message: string, extraData: Record<string, unknown> = {}, options?: RequestOptions) { return this.requestMode(message, 'practice', extraData, options); }
+  askDesky(message: string, extraData: Record<string, unknown> = {}, options?: RequestOptions) { return this.requestMode(message, 'deskbot', extraData, options); }
 }
 
-export const mathdeskAI = new N8nMathDeskAI();
+export const mathdeskAI = new SupabaseMathDeskAI();

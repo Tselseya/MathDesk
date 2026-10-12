@@ -1,35 +1,54 @@
 # MathDesk production deployment
 
-The React/Vite redesign is now merged into `main`. The current deployment target is the custom domain `app.mathdesk.page.gd`, served from an Apache-compatible host such as InfinityFree.
+MathDesk is a React/Vite app deployed to GitHub Pages at `https://app.mathdesk.page.gd/`. AI requests go through the authenticated Supabase Edge Function `mathdesk-ai`; the browser no longer calls local n8n, ngrok, Groq, or a browser-visible API gateway.
 
 ## Build locally or in CI
 
 ```bash
 npm ci
 cp .env.production.example .env.production
-# Fill in the production n8n or hosted API endpoint and Supabase anon key.
 npm run check
+npm test
 npm run build
 ```
 
-Vite embeds `VITE_*` variables at build time. Do not upload `.env.production`, `.env.local`, or any file containing a private n8n endpoint. The Supabase URL and anon key are intended for browser use, but database access is protected by Supabase Row Level Security.
+Only public Supabase client values belong in the browser build:
 
-## Upload to InfinityFree/Apache
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
 
-Upload the **contents of `dist/`**, not the `dist` directory itself, into the public web root for `app.mathdesk.page.gd`. The generated `dist/.htaccess` enables client-side SPA fallback and long-lived caching for hashed static assets. Keep `CNAME` in the repository for GitHub-based deployment metadata, but do not upload it as an application route unless the host requires it.
+Do not put `GROQ_API_KEY`, a Supabase service-role/secret key, or any n8n credential in a `VITE_*` variable.
 
-After upload, verify the root page, `/site.webmanifest`, `/sw.js`, Supabase login, chat-history sync, saved lessons, and an AI request. Camera capture requires HTTPS and a user gesture; the custom domain must remain HTTPS for camera access and PWA installation.
+## Supabase AI deployment
+
+See [`docs/EDGE-FUNCTION-SETUP.md`](./docs/EDGE-FUNCTION-SETUP.md) for the complete sequence:
+
+1. Apply `supabase/migrations/20261012094923_ai_rate_limits.sql`.
+2. Set `GROQ_API_KEY` and `GROQ_MODEL` as Supabase Edge Function secrets.
+3. Deploy `supabase/functions/mathdesk-ai` with JWT verification enabled.
+4. Verify unauthenticated requests return `401`.
+5. Verify an authenticated request returns a non-empty reply.
+6. Verify the browser network panel shows only the Supabase Function URL.
+
+The function requires a signed-in Supabase user. The provider key stays server-side. Rate limits are stored in a private table and consumed through a service-role-only RPC.
 
 ## GitHub Pages deployment
 
-The repository now includes `.github/workflows/deploy-pages.yml`. Every push to `main` builds the React application and deploys the generated `dist/` artifact through GitHub Pages. This is the required path for the current `app.mathdesk.page.gd` custom-domain deployment; uploading source files directly to the Pages root will produce a blank page because the compiled `assets/` directory is missing.
+The repository includes `.github/workflows/deploy-pages.yml`. Every push to `main` builds and deploys the `dist/` artifact through GitHub Pages. Configure these GitHub Actions secrets:
 
-In the repository settings, add the following Actions secrets before relying on cloud functionality: `VITE_N8N_WEBHOOK_URL`, `VITE_MATHDESK_API_URL` when a hosted gateway exists, `VITE_SUPABASE_URL`, and `VITE_SUPABASE_ANON_KEY`. The workflow can build with empty optional values, but AI and Supabase features will remain unavailable until their secrets are configured.
+```text
+VITE_SUPABASE_URL
+VITE_SUPABASE_ANON_KEY
+```
 
-## Production environment values
+After the Edge Function is verified, remove obsolete `VITE_N8N_WEBHOOK_URL` and `VITE_MATHDESK_API_URL` secrets from GitHub Actions. They are no longer read by the app or workflow.
 
-Use `.env.production.example` as the template. The preferred future setup is `VITE_MATHDESK_API_URL` pointing to a stable hosted API gateway. Until that exists, set `VITE_N8N_WEBHOOK_URL` to the production n8n webhook. Never expose n8n credentials in frontend variables; the endpoint itself is visible to browser users and should be protected by the workflow or a server-side gateway.
+## Upload to an Apache host
 
-## Rollback
+If the custom domain is served by an Apache-compatible host instead of GitHub Pages, upload the contents of `dist/` into the public web root. Do not upload `.env` files, the repository’s Supabase service credentials, or the `supabase/functions` source as public files.
 
-The previous design is preserved in the Git history and the `legacy/` directory. To roll back, redeploy the last known-good `main` build artifact or revert the merge commit `75b5f5e4e2487f0c5a6d96cec50c9cc8f8af738b` in a separate reviewed commit. Do not delete the legacy source as part of routine deployment.
+## Production rollback
+
+To roll back the website, revert the frontend commit and let the Pages workflow deploy the previous known-good build. To rotate the AI provider key, replace `GROQ_API_KEY` in Supabase Edge Function secrets and redeploy the function. Do not place the old key into GitHub or the browser.
