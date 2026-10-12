@@ -1,24 +1,13 @@
 <!doctype html>
 <html lang="en">
   <head>
-    <script>
-      (() => {
-        const key = 'mathdesk:theme';
-        let saved = null;
-        try { saved = localStorage.getItem(key); } catch {}
-        const theme = saved === 'dark' || saved === 'light'
-          ? saved
-          : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-        document.documentElement.dataset.theme = theme;
-        document.documentElement.style.colorScheme = theme;
-      })();
-    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#2459e6" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-title" content="MathDesk" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
 
     <title>MathDesk: Free AI Math Help with Step-by-Step Solutions</title>
     <meta name="description" content="Got a math problem? Ask Desky, the free AI math tutor on MathDesk, for step-by-step solutions, clear explanations, and practice problems." />
@@ -41,6 +30,7 @@
     <meta name="twitter:title" content="MathDesk: Learn Math Better, One Step at a Time" />
     <meta name="twitter:description" content="Got a math problem? Ask Desky for free step-by-step solutions, clear explanations, and practice problems." />
     <meta name="twitter:image" content="https://app.mathdesk.page.gd/og-image.png" />
+    <!-- A Content-Security-Policy tag is added automatically at build time by vite.config.ts. -->
   </head>
   <body>
     <div id="root"></div>
