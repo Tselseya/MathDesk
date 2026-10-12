@@ -13,7 +13,9 @@ function prose(text: string) {
     const lines = block.trim().split('\n').filter(Boolean);
     if (!lines.length) return '';
     if (lines.every((line) => /^\d+[.)]\s/.test(line))) {
-      return `<ol>${lines.map((line) => `<li>${inline(line.replace(/^\d+[.)]\s+/, ''))}</li>`).join('')}</ol>`;
+      // Keep the model's own numbers: items separated by blank lines arrive as separate blocks and would all show "1." otherwise.
+      const start = Math.min(Number.parseInt(lines[0], 10) || 1, 9999);
+      return `<ol start="${start}">${lines.map((line) => `<li>${inline(line.replace(/^\d+[.)]\s+/, ''))}</li>`).join('')}</ol>`;
     }
     if (lines.every((line) => /^[-*]\s/.test(line))) {
       return `<ul>${lines.map((line) => `<li>${inline(line.replace(/^[-*]\s+/, ''))}</li>`).join('')}</ul>`;
