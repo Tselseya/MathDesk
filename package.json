@@ -23,6 +23,6 @@
     "@vitejs/plugin-react": "latest",
     "typescript": "latest",
     "vite": "latest",
-    "vitest": "^3.2.4"
+    "vitest": "^5.0.3"
   }
 }
