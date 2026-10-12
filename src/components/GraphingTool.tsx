@@ -39,4 +39,3 @@ export default function GraphingTool({ onClose }: GraphingToolProps) {
     </div>
   );
 }
-
