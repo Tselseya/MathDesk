@@ -1498,26 +1498,35 @@ html[data-motion='reduced'] .deskbot-panel, html[data-motion='reduced'] .deskbot
   --surface-muted: #edf3ff;
   --panel: rgba(255, 255, 255, .9);
   --shadow: rgba(30, 72, 163, .12);
+  --grid-line: rgba(43, 83, 175, .09);
 }
 
 :root[data-theme='dark'] {
-  --ink: #edf4ff;
-  --muted: #a7b7d5;
-  --blue: #78a0ff;
-  --cyan: #4be1f2;
-  --line: rgba(143, 174, 244, .2);
-  --surface: #121d36;
-  --surface-soft: #182541;
-  --surface-muted: #203154;
-  --panel: rgba(18, 29, 54, .92);
+  --ink: #f0f5ff;
+  --muted: #b8c7e4;
+  --blue: #8fb0ff;
+  --cyan: #6be8f4;
+  --line: rgba(177, 201, 255, .24);
+  --surface: #111c34;
+  --surface-soft: #182744;
+  --surface-muted: #22365a;
+  --panel: rgba(17, 28, 52, .94);
   --shadow: rgba(0, 0, 0, .32);
+  --grid-line: rgba(143, 193, 255, .14);
   color-scheme: dark;
 }
 
 :root[data-theme='dark'] body,
 :root[data-theme='dark'] .app-shell,
 :root[data-theme='dark'] .restored-chat-page { background: #0b1328; color: var(--ink); }
-:root[data-theme='dark'] .shell { background: radial-gradient(circle at 86% 12%, rgba(75, 225, 242, .12), transparent 26rem), linear-gradient(135deg, #0d1830 0%, #101d39 100%); }
+:root[data-theme='dark'] .shell {
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px),
+    radial-gradient(circle at 86% 12%, rgba(107, 232, 244, .14), transparent 26rem),
+    linear-gradient(135deg, #0b1429 0%, #101d39 100%);
+  background-size: 32px 32px, 32px 32px, auto, auto;
+}
 :root[data-theme='dark'] .home-topbar,
 :root[data-theme='dark'] .workspace-card,
 :root[data-theme='dark'] .feature-card,

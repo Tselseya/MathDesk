@@ -41,8 +41,8 @@ export default function AccountPopover({ label, busy = false, onOpenAccount, onL
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={`Open account menu for ${label}`}
-        title={label}
+        aria-label={`Open profile and settings for ${label}`}
+        title={`${label} — profile and settings`}
       >
         <span className="account-menu-avatar" aria-hidden="true"><UserRound size={15} /></span>
         <span className="account-menu-label">{label}</span>
@@ -57,7 +57,7 @@ export default function AccountPopover({ label, busy = false, onOpenAccount, onL
           <button type="button" role="menuitem" onClick={() => choose(() => onOpenAccount('settings'))}>
             <Settings size={15} aria-hidden="true" /> Settings
           </button>
-          <a role="menuitem" href="mailto:chelseandrea99@gmail.com?subject=MathDesk%20help" onClick={() => setOpen(false)}>
+          <a role="menuitem" href="mailto:mathdesk.team@gmail.com?subject=MathDesk%20help" onClick={() => setOpen(false)}>
             <CircleHelp size={15} aria-hidden="true" /> Help
           </a>
           <div className="account-popover-divider" />
