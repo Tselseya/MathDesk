@@ -29,6 +29,7 @@ import {
 import AuthPanel from './AuthPanel';
 import CalculatorPanel from './CalculatorPanel';
 import CameraCapture from './CameraCapture';
+import DeskbotHelpWidget from './DeskbotHelpWidget';
 import GraphingTool from './GraphingTool';
 import HandwritingCanvas from './HandwritingCanvas';
 import LessonLibrary from './LessonLibrary';
@@ -761,6 +762,14 @@ export default function ChatWorkspace({
           onClose={() => setShareOpen(false)}
         />
       )}
+      <DeskbotHelpWidget
+        onOpenChat={(initialPrompt = '') => {
+          if (initialPrompt) updateTab(activeTab.id, (tab) => ({ ...tab, draft: initialPrompt }));
+          setTool(null);
+          window.setTimeout(() => textareaRef.current?.focus(), 0);
+        }}
+        onUploadPhoto={() => fileInputRef.current?.click()}
+      />
     </section>
   );
 }
