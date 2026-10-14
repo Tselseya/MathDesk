@@ -1,5 +1,5 @@
 /**
- * Client-side limits. Keep these in sync with the "MathDesk Guard" node in the n8n workflow,
+ * Client-side limits. Keep these in sync with the authenticated Supabase Edge Function,
  * which enforces the same rules on the server side (the browser can always be bypassed).
  */
 export const MAX_PROMPT_CHARS = 4000;
