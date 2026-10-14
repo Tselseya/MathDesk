@@ -34,6 +34,22 @@ const modes: Array<{ id: MathDeskMode; label: string; description: string; Icon:
 ];
 
 const PENDING_SHARE_KEY = 'mathdesk.pending-share-token';
+const WORKSPACE_STATE_KEY = 'mathdesk.workspace-state';
+
+function readWorkspaceState() {
+  try {
+    const value = JSON.parse(sessionStorage.getItem(WORKSPACE_STATE_KEY) || 'null') as { open?: boolean; mode?: MathDeskMode } | null;
+    if (!value?.open) return null;
+    const savedMode = value.mode && modes.some((item) => item.id === value.mode) ? value.mode : 'solve';
+    return { open: true, mode: savedMode as MathDeskMode };
+  } catch {
+    return null;
+  }
+}
+
+function clearWorkspaceState() {
+  try { sessionStorage.removeItem(WORKSPACE_STATE_KEY); } catch { /* Storage may be disabled. */ }
+}
 
 function shareTokenFromHash() {
   return new URLSearchParams(window.location.hash.replace(/^#/, '')).get('share') || '';
@@ -47,14 +63,19 @@ function initialShareToken() {
 
 function AppContent() {
   const { ready: authReady, userId } = useAuthUser();
-  const [workspaceOpen, setWorkspaceOpen] = useState(false);
-  const [mode, setMode] = useState<MathDeskMode>('solve');
+  const [workspaceOpen, setWorkspaceOpen] = useState(() => Boolean(readWorkspaceState()?.open));
+  const [mode, setMode] = useState<MathDeskMode>(() => readWorkspaceState()?.mode || 'solve');
   const [prompt, setPrompt] = useState('');
   const [autoSendInitialPrompt, setAutoSendInitialPrompt] = useState(false);
   const [initialFiles, setInitialFiles] = useState<File[]>([]);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [shareToken, setShareToken] = useState(initialShareToken);
   const homeUploadInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (!workspaceOpen) return;
+    try { sessionStorage.setItem(WORKSPACE_STATE_KEY, JSON.stringify({ open: true, mode })); } catch { /* Storage may be disabled. */ }
+  }, [workspaceOpen, mode]);
 
   useEffect(() => {
     const elements = document.querySelectorAll<HTMLElement>('.reveal-on-scroll');
@@ -88,6 +109,7 @@ function AppContent() {
   }
 
   function navigateHome() {
+    clearWorkspaceState();
     setInitialFiles([]);
     setWorkspaceOpen(false);
     setMobileNavOpen(false);
@@ -95,6 +117,7 @@ function AppContent() {
   }
 
   function navigateTools() {
+    clearWorkspaceState();
     setInitialFiles([]);
     setWorkspaceOpen(false);
     setMobileNavOpen(false);

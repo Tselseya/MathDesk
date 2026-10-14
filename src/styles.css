@@ -1598,6 +1598,19 @@ html[data-motion='reduced'] .deskbot-panel, html[data-motion='reduced'] .deskbot
 :root[data-theme='dark'] .legacy-sidebar-bottom,
 :root[data-theme='dark'] .legacy-sidebar-history { border-color: var(--line); }
 :root[data-theme='dark'] .legacy-chat-messages { background: #0e1830; }
+:root[data-theme='dark'] .restored-chat .legacy-tab-bar { background: #111c34; border-color: var(--line); }
+:root[data-theme='dark'] .restored-chat .legacy-tab-item { background: #182744; border-color: var(--line); }
+:root[data-theme='dark'] .restored-chat .legacy-tab-item.active { background: #1d3153; }
+:root[data-theme='dark'] .restored-chat .legacy-tab { color: var(--muted); }
+:root[data-theme='dark'] .restored-chat .legacy-tab.active { color: var(--ink); }
+:root[data-theme='dark'] .restored-chat .legacy-msg-bubble { color: var(--ink); background: #182744; border: 1px solid var(--line); box-shadow: 0 8px 26px rgba(0, 0, 0, .16); }
+:root[data-theme='dark'] .restored-chat .legacy-message.user .legacy-msg-bubble { color: #07132b; background: linear-gradient(145deg, #8fb0ff, #6be8f4); border-color: transparent; }
+:root[data-theme='dark'] .restored-chat .legacy-composer { background: #111c34; border-color: var(--line); box-shadow: 0 12px 30px rgba(0, 0, 0, .2); }
+:root[data-theme='dark'] .restored-chat .legacy-input-row textarea { color: var(--ink); }
+:root[data-theme='dark'] .restored-chat .legacy-plus-btn,
+:root[data-theme='dark'] .restored-chat .legacy-camera-btn { color: var(--cyan); background: #20365a; }
+:root[data-theme='dark'] .restored-chat .legacy-quick-actions button { color: #07132b; background: #b5e9f1; }
+:root[data-theme='dark'] .restored-chat .legacy-quick-actions button:hover { background: #d2f6f8; }
 :root[data-theme='dark'] .theme-toggle,
 :root[data-theme='dark'] .home-topbar .motion-toggle { color: var(--muted); background: var(--surface-soft); border-color: var(--line); }
 :root[data-theme='dark'] .theme-toggle:hover,
@@ -1643,6 +1656,11 @@ html[data-motion='reduced'] .deskbot-panel, html[data-motion='reduced'] .deskbot
 .account-popover button:hover, .account-popover a:hover { color: var(--blue); background: var(--surface-soft); }
 .account-popover button:disabled { cursor: wait; opacity: .55; }
 .account-popover-divider { height: 1px; margin: 6px 2px; background: var(--line); }
+.auth-settings { display: grid; gap: 10px; }
+.auth-setting-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.auth-setting-row span { display: grid; gap: 3px; }
+.auth-setting-row strong { color: var(--ink); font-size: .82rem; }
+.auth-setting-row small { color: var(--muted); font-size: .72rem; line-height: 1.35; }
 .home-nav-menu .account-menu { min-width: 0; }
 .home-nav-menu .account-menu-trigger { min-height: 38px; width: auto; max-width: 190px; }
 .home-nav-menu .account-popover { top: calc(100% + 8px); right: 0; bottom: auto; }
@@ -1661,6 +1679,9 @@ html[data-motion='reduced'] .deskbot-panel, html[data-motion='reduced'] .deskbot
 
 /* The restored chat rail replaces the legacy hide-collapsed behavior. */
 .restored-chat-page > .restored-chat.sidebar-collapsed .legacy-chat-sidebar { width: auto; opacity: 1; transform: none; }
+.restored-chat .legacy-chat-sidebar { overflow: visible; }
+.restored-chat.sidebar-collapsed .legacy-chat-sidebar { z-index: 30; }
+.restored-chat.sidebar-collapsed .account-popover { z-index: 120; }
 
 @media (max-width: 760px) {
   .restored-chat .chat-header-actions .theme-toggle { width: 34px; min-height: 34px; padding-inline: 0; }

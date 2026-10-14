@@ -57,7 +57,15 @@ export default function AccountPopover({ label, busy = false, onOpenAccount, onL
           <button type="button" role="menuitem" onClick={() => choose(() => onOpenAccount('settings'))}>
             <Settings size={15} aria-hidden="true" /> Settings
           </button>
-          <a role="menuitem" href="mailto:mathdesk.team@gmail.com?subject=MathDesk%20help" onClick={() => setOpen(false)}>
+          <a
+            role="menuitem"
+            href="#mathdesk-help"
+            onClick={(event) => {
+              event.preventDefault();
+              setOpen(false);
+              window.dispatchEvent(new CustomEvent('mathdesk:open-help'));
+            }}
+          >
             <CircleHelp size={15} aria-hidden="true" /> Help
           </a>
           <div className="account-popover-divider" />
