@@ -27,6 +27,12 @@ export default function DeskbotHelpWidget({ onOpenChat, onUploadPhoto }: Deskbot
   }, [open]);
 
   useEffect(() => {
+    const openHelp = () => setOpen(true);
+    window.addEventListener('mathdesk:open-help', openHelp);
+    return () => window.removeEventListener('mathdesk:open-help', openHelp);
+  }, []);
+
+  useEffect(() => {
     endRef.current?.scrollIntoView({ block: 'end', behavior: 'smooth' });
   }, [messages, open]);
 
@@ -117,6 +123,7 @@ export default function DeskbotHelpWidget({ onOpenChat, onUploadPhoto }: Deskbot
       <button
         type="button"
         className="deskbot-launcher"
+        id="mathdesk-help"
         onClick={() => setOpen((current) => !current)}
         aria-label={open ? 'Close Desky help' : 'Open Desky help'}
         aria-haspopup="dialog"

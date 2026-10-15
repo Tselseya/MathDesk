@@ -17,9 +17,11 @@ import {
 } from '../services/supabase';
 import { checkPasswordAgainstBreaches } from '../lib/passwordSecurity';
 import AccountPopover from './AccountPopover';
+import MotionToggle from './MotionToggle';
+import ThemeToggle from './ThemeToggle';
 
 interface AuthPanelProps { compact?: boolean; }
-type Mode = 'login' | 'signup' | 'forgot' | 'recovery' | 'account';
+type Mode = 'login' | 'signup' | 'forgot' | 'recovery' | 'account' | 'settings';
 
 const MIN_PASSWORD = 8;
 
@@ -233,6 +235,7 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     forgot: 'Reset your password',
     recovery: 'Choose a new password',
     account: 'Your account',
+    settings: 'Settings',
   };
   const subtitles: Record<Mode, string> = {
     login: 'Continue your saved learning sessions.',
@@ -240,6 +243,7 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     forgot: 'We will email you a link to set a new password.',
     recovery: `Use at least ${MIN_PASSWORD} characters.`,
     account: userLabel,
+    settings: 'Adjust how MathDesk looks and moves.',
   };
 
   const dialog = open ? <div className="auth-overlay" role="presentation" onMouseDown={(event) => {
@@ -259,6 +263,10 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
           <button type="button" className="auth-danger" onClick={() => void removeAccount()} disabled={busy || deleteText.trim().toUpperCase() !== 'DELETE'}><Trash2 size={15} /> Delete my account</button>
         </div>
         {notice && <p className="auth-notice" role="alert">{notice}</p>}
+      </div> : mode === 'settings' ? <div className="auth-settings">
+        <div className="auth-setting-row"><span><strong>Theme</strong><small>Choose light or dark mode.</small></span><ThemeToggle /></div>
+        <div className="auth-setting-row"><span><strong>Motion</strong><small>Reduce animation if you prefer a calmer interface.</small></span><MotionToggle /></div>
+        <button type="button" className="auth-secondary" onClick={() => switchMode('account')}><UserPlus size={15} /> Account and data</button>
       </div> : <form onSubmit={submit}>
         {mode === 'signup' && <label className="auth-label">Name<input ref={firstInputRef} value={name} maxLength={80} onChange={(event) => setName(event.target.value)} autoComplete="name" required /></label>}
         {(mode === 'login' || mode === 'signup' || mode === 'forgot') && <label className="auth-label">Email<input ref={mode === 'signup' ? undefined : firstInputRef} value={email} maxLength={254} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" required /></label>}
@@ -291,7 +299,7 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     {compact ? <AccountPopover
       label={userLabel}
       busy={busy}
-      onOpenAccount={() => { switchMode('account'); setOpen(true); }}
+            onOpenAccount={(section) => { switchMode(section === 'profile' ? 'account' : 'settings'); setOpen(true); }}
       onLogout={() => void logout()}
     /> : <>
       <button type="button" className="auth-session" title={`${userLabel}: account settings`} onClick={() => { switchMode('account'); setOpen(true); }}>Signed in as {userLabel}</button>
