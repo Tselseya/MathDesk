@@ -9,7 +9,7 @@ const MAX_IMAGES = 2;
 const MAX_IMAGE_BYTES = 1_200_000;
 const MAX_TOTAL_IMAGE_BYTES = 2_000_000;
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const DEFAULT_MODEL = 'meta-llama/llama-4-scout-17b-16e-instruct';
+const DEFAULT_MODEL = 'qwen/qwen3.8-27b';
 
 type MathDeskImage = { mimeType: string; data: string };
 type MathDeskRequest = { message: string; mode: string; images?: MathDeskImage[]; hasImages?: boolean };
@@ -129,7 +129,10 @@ async function callGroq(request: MathDeskRequest) {
     }),
     signal: AbortSignal.timeout(55_000),
   });
-  if (!response.ok) throw new HttpError(response.status === 429 ? 429 : 502, errorMessage(response.status));
+  if (!response.ok) {
+    console.error('groq error', response.status, (await response.text()).slice(0, 200));
+    throw new HttpError(response.status === 429 ? 429 : 502, errorMessage(response.status));
+  }
   const payload = await response.json() as { choices?: Array<{ message?: { content?: string } }> };
   const reply = payload.choices?.[0]?.message?.content?.trim();
   if (!reply) throw new HttpError(502, 'MathDesk AI did not send an answer. Please try again.');
