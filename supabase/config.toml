@@ -1,2 +1,5 @@
 [functions.mathdesk-ai]
-verify_jwt = true
+# The gateway check "Verify JWT with legacy secret" rejects this project's ES256 user tokens, so it stays off.
+# mathdesk-ai verifies the signed-in user itself with auth.getUser(); see docs/EDGE-FUNCTION-SETUP.md.
+verify_jwt = false
+
