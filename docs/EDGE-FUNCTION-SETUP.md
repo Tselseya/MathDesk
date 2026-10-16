@@ -7,9 +7,8 @@ This replaces the browser-visible local n8n/ngrok endpoint with an authenticated
 ```text
 Signed-in browser
   -> supabase.functions.invoke('mathdesk-ai')
-  -> Supabase JWT verification (verify_jwt = true)
-  -> Edge Function validates body and user
-  -> private.ai_rate_limits via service-role RPC
+  -> Edge Function verifies the user token (auth.getUser) and validates the body
+  -> RPC consume_ai_rate_limit: per-user and global quotas (private tables, service role only)
   -> Groq API using GROQ_API_KEY
   -> { "reply": "..." }
 ```
@@ -40,7 +39,7 @@ Use the Supabase Dashboard: **Project Settings → Edge Functions → Secrets**,
 ```bash
 supabase secrets set \
   GROQ_API_KEY='your-groq-key' \
-  GROQ_MODEL='meta-llama/llama-4-scout-17b-16e-instruct'
+  GROQ_MODEL='qwen/qwen3.8-27b'
 ```
 
 Supabase supplies these automatically to the function and also supplies `SUPABASE_URL`, `SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`. Do not add any of them to GitHub Pages secrets except the public `VITE_SUPABASE_URL` and public client key.
@@ -51,7 +50,9 @@ Supabase supplies these automatically to the function and also supplies `SUPABAS
 supabase functions deploy mathdesk-ai --project-ref hmkngkzmoxltozwnwxfl
 ```
 
-The repository also contains `supabase/config.toml`, which keeps JWT verification enabled. Do not deploy this function with `--no-verify-jwt`.
+`supabase/config.toml` sets `verify_jwt = false` on purpose. This project signs user tokens with asymmetric ES256 keys, and the gateway option "Verify JWT with legacy secret" rejects them. The function checks every token itself with `auth.getUser`, so a missing, malformed or anon-key token still returns `401`. Do not switch the gateway check back on. After any CLI deploy, open the function's Settings page and confirm that option is still off.
+
+Groq retires models without much notice (`llama-3.3-70b-versatile` and `llama-4-scout` are gone). If requests start returning `502`, check the function logs for a `groq error` line, list models with `GET https://api.groq.com/openai/v1/models`, and update `GROQ_MODEL`.
 
 ## 4. Verify authentication before testing AI
 
@@ -86,7 +87,7 @@ The public Supabase URL and publishable/anon key are not provider secrets; datab
 
 ## 6. Test matrix before production launch
 
-- No `Authorization` header → `401`.
+- No `Authorization` header, or the public anon key as the bearer token → `401`.
 - Expired or malformed user JWT → `401`.
 - Signed-in valid request → `200` and a non-empty `reply`.
 - Unknown mode → `400`.
@@ -94,8 +95,9 @@ The public Supabase URL and publishable/anon key are not provider secrets; datab
 - Oversized message → `413`.
 - Third image → `413`.
 - Images in practice/deskbot mode → `400`.
-- More than 30 requests in ten minutes for one account → `429`.
+- More than 10 requests in ten minutes (4 with images), or 40 in a UTC day (10 with images), for one account → `429` with `Retry-After`.
 - A second account has its own quota bucket.
+- The shared cap of 120 requests (30 with images) per UTC day returns `429` to every account, with a daily-capacity message and `Retry-After` set to the next UTC midnight.
 - Provider failure → generic `502`; provider key is never returned.
 - Browser network panel shows only the Supabase Function URL, never Groq or ngrok.
 
