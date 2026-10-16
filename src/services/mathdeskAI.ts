@@ -40,7 +40,7 @@ export function validateRequest(request: MathDeskRequest) {
 
 function messageForStatus(status: number) {
   if (status === 401) return 'Please sign in to use MathDesk AI.';
-  if (status === 429) return 'MathDesk is getting a lot of requests right now. Please wait a few minutes and try again.';
+  if (status === 429) return 'MathDesk AI is at its usage limit right now. Please try again in a few minutes, or tomorrow if it persists.';
   if (status === 413) return 'That message or image is too large. Try something shorter or a smaller image.';
   if (status === 400 || status === 422) return 'That request could not be processed. Please check your message and try again.';
   return 'MathDesk AI is having trouble right now. Please try again in a moment.';
