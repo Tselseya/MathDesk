@@ -167,8 +167,10 @@ export default function ChatWorkspace({
         }
         const saved = await loadConversations(userId);
         if (!mounted) return;
-        if (saved.length > 0) {
-          const restored: ConversationTab[] = saved.map((row) => ({
+        const combined = [...saved, ...localSaved.filter((local) => !saved.some((row) => row.id === local.id))];
+        combined.forEach((row) => saveLocalConversation(scope, row));
+        if (combined.length > 0) {
+          const restored: ConversationTab[] = combined.map((row) => ({
             id: row.id,
             draftSlot: row.id,
             title: row.title,
@@ -193,8 +195,11 @@ export default function ChatWorkspace({
         const legacy = await loadLegacyHistory(userId);
         if (!mounted || legacy.length === 0) return;
         const firstUserMessage = legacy.find((message) => message.role === 'user')?.content ?? '';
+        const legacyTitle = firstUserMessage ? titleForMessage(firstUserMessage) : 'Recent conversation';
+        const primaryId = tabsRef.current[0]?.id ?? newId();
+        saveLocalConversation(scope, { id: primaryId, title: legacyTitle, mode: initialMode, messages: legacy });
         setTabs((current) => current.map((tab, index) => index === 0 && tab.messages.length === 0
-          ? { ...tab, messages: legacy, title: firstUserMessage ? titleForMessage(firstUserMessage) : 'Recent conversation' }
+          ? { ...tab, messages: legacy, title: legacyTitle }
           : tab));
       } catch {
         noticeOnPrimary('Saved chats could not be loaded. Chatting still works.');
