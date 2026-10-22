@@ -7,7 +7,7 @@ This branch changes the frontend to allow core MathDesk use without a named acco
 1. Open Supabase Dashboard → Authentication → Sign In / Providers (wording may vary).
 2. Enable **Allow anonymous sign-ins** for the MathDesk project.
 3. Do not enable public table access for chat or lesson tables. Guest chats and lessons stay in browser storage.
-4. Deploy the updated `mathdesk-ai` Edge Function from this branch. It still validates the Supabase session and consumes the existing server-side AI rate limits; anonymous users are assigned a server-side UUID quota.
+4. The existing `mathdesk-ai` Edge Function already validates Supabase sessions and applies server-side UUID quotas. No Edge Function source change is needed for anonymous sessions; verify the currently deployed function remains active.
 5. Apply `supabase/migrations/20261023000000_public_share_links.sql` only after reviewing it. It grants `anon` execution on the token-only getter; it does not grant table access. Create/status/revoke remain authenticated owner operations.
 6. Verify an anonymous browser can solve a problem, a public share works without signing in, and an expired/revoked link returns unavailable.
 
