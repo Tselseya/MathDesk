@@ -220,7 +220,7 @@ export default function ChatWorkspace({
           id: row.id, draftSlot: row.id, title: row.title, mode: row.mode,
           messages: row.messages, draft: '', pendingImages: [], notice: '',
         }));
-        if (activeDraft && (activeDraft.draft.trim() || activeDraft.pendingImages.length > 0)) {
+        if (activeDraft && (activeDraft.messages.length > 0 || activeDraft.draft.trim() || activeDraft.pendingImages.length > 0)) {
           return [activeDraft, ...restored.filter((row) => row.id !== activeDraft.id)];
         }
         return restored.length ? restored : current;
