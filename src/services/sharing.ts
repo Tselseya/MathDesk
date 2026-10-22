@@ -113,12 +113,8 @@ export async function revokeConversationShare(expectedUserId: string, conversati
   return data === true;
 }
 
-export async function getSharedConversation(
-  expectedUserId: string,
-  token: string,
-): Promise<SharedConversationSnapshot> {
+export async function getSharedConversation(token: string): Promise<SharedConversationSnapshot> {
   const client = requireSupabase();
-  await requireExpectedUser(expectedUserId);
   const tokenHash = await hashShareToken(token);
   const { data, error } = await client.rpc('get_shared_conversation', {
     p_token_hash: tokenHash,
