@@ -206,6 +206,25 @@ export default function ChatWorkspace({
     return () => { mounted = false; };
   }, [userId, scope]);
 
+  useEffect(() => {
+    const refreshLocalChats = () => {
+      const saved = loadLocalConversations(scope);
+      setTabs((current) => {
+        const activeDraft = current.find((tab) => tab.id === activeTabId);
+        const restored: ConversationTab[] = saved.map((row) => ({
+          id: row.id, draftSlot: row.id, title: row.title, mode: row.mode,
+          messages: row.messages, draft: '', pendingImages: [], notice: '',
+        }));
+        if (activeDraft && (activeDraft.draft.trim() || activeDraft.pendingImages.length > 0)) {
+          return [activeDraft, ...restored.filter((row) => row.id !== activeDraft.id)];
+        }
+        return restored.length ? restored : current;
+      });
+    };
+    window.addEventListener('mathdesk:local-data-imported', refreshLocalChats);
+    return () => window.removeEventListener('mathdesk:local-data-imported', refreshLocalChats);
+  }, [scope, activeTabId]);
+
   useEffect(() => () => {
     requestsRef.current.forEach((controller) => controller.abort());
     requestsRef.current.clear();
