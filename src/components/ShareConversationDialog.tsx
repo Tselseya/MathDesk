@@ -59,7 +59,7 @@ export default function ShareConversationDialog({ userId, conversation, onClose 
       const result = await createConversationShare(userId, conversation);
       setShareUrl(result.url);
       setStatus({ active: true, created_at: new Date().toISOString(), expires_at: result.expiresAt, revoked_at: null });
-      setNotice('Link created. Anyone who opens it must sign in to MathDesk.');
+      setNotice('Link created. Anyone with the link can view this read-only snapshot until it expires or you revoke it.');
     } catch (error) {
       const message = error instanceof Error ? error.message : '';
       setNotice(message.includes('Conversation too large to share')
@@ -108,7 +108,7 @@ export default function ShareConversationDialog({ userId, conversation, onClose 
         <p className="eyebrow"><Share2 size={14} /> Conversation sharing</p>
         <h2 id="share-dialog-title">Share a snapshot</h2>
         <p id="share-dialog-description" className="share-dialog-description">
-          The link opens a read-only snapshot for any signed-in MathDesk user. It expires after 30 days and you can revoke it sooner. Uploaded photos and files are not included; people with the link may copy or capture the text.
+          Anyone with the link can open this read-only snapshot without an account. It expires after 30 days and you can revoke it sooner. Uploaded photos and files are not included; people with the link may copy or capture the text.
         </p>
 
         {!userId ? (
