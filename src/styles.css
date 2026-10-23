@@ -1692,3 +1692,8 @@ html[data-motion='reduced'] .deskbot-panel, html[data-motion='reduced'] .deskbot
   .restored-chat .legacy-header-title h3,
   .restored-chat .legacy-header-title p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* Guest-first local backup controls */
+.lesson-backup-actions { display: flex; flex-wrap: wrap; gap: .6rem; margin-bottom: .75rem; }
+.secondary-tool-button { display: inline-flex; align-items: center; justify-content: center; gap: .45rem; border: 1px solid var(--border, rgba(130,160,210,.28)); border-radius: .7rem; padding: .65rem .8rem; background: var(--surface, rgba(130,160,210,.08)); color: inherit; font: inherit; cursor: pointer; }
+.secondary-tool-button:hover { filter: brightness(1.08); }

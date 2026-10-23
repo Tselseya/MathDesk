@@ -40,6 +40,7 @@ import { newId } from '../lib/ids';
 import { ImageRejected, prepareImage, type PreparedImage } from '../lib/images';
 import { MAX_IMAGES_PER_MESSAGE, MAX_PROMPT_CHARS } from '../lib/limits';
 import { draftKey, scopeOf } from '../lib/localScope';
+import { deleteLocalConversation, loadLocalConversations, saveLocalConversation } from '../services/localConversations';
 import { mathdeskAI, validateRequest } from '../services/mathdeskAI';
 import { deleteConversation, loadConversations, loadLegacyHistory, saveConversation, type ChatMessageRecord } from '../services/supabase';
 import type { MathDeskMode } from '../types/ai';
@@ -149,20 +150,27 @@ export default function ChatWorkspace({
   // so nothing from a previous account can ever be on screen here.
   useEffect(() => {
     let mounted = true;
-    setHistoryReady(!userId);
-    if (!userId) {
-      setHistoryReady(true);
-      return undefined;
-    }
+    setHistoryReady(false);
     const noticeOnPrimary = (notice: string) => {
       if (mounted) setTabs((current) => current.map((tab, index) => index === 0 ? { ...tab, notice } : tab));
     };
     const restoreHistory = async () => {
       try {
+        const localSaved = loadLocalConversations(scope);
+        if (!userId) {
+          if (localSaved.length > 0) {
+            const restored: ConversationTab[] = localSaved.map((row) => ({ id: row.id, draftSlot: row.id, title: row.title, mode: row.mode, messages: row.messages, draft: '', pendingImages: [], notice: '' }));
+            setTabs((current) => current[0]?.messages.length || current[0]?.draft.trim() ? [...current, ...restored.filter((row) => !current.some((tab) => tab.id === row.id))] : restored);
+            setActiveTabId((currentId) => localSaved.some((row) => row.id === currentId) ? currentId : localSaved[0].id);
+          }
+          return;
+        }
         const saved = await loadConversations(userId);
         if (!mounted) return;
-        if (saved.length > 0) {
-          const restored: ConversationTab[] = saved.map((row) => ({
+        const combined = [...saved, ...localSaved.filter((local) => !saved.some((row) => row.id === local.id))];
+        combined.forEach((row) => saveLocalConversation(scope, row));
+        if (combined.length > 0) {
+          const restored: ConversationTab[] = combined.map((row) => ({
             id: row.id,
             draftSlot: row.id,
             title: row.title,
@@ -187,8 +195,11 @@ export default function ChatWorkspace({
         const legacy = await loadLegacyHistory(userId);
         if (!mounted || legacy.length === 0) return;
         const firstUserMessage = legacy.find((message) => message.role === 'user')?.content ?? '';
+        const legacyTitle = firstUserMessage ? titleForMessage(firstUserMessage) : 'Recent conversation';
+        const primaryId = tabsRef.current[0]?.id ?? newId();
+        saveLocalConversation(scope, { id: primaryId, title: legacyTitle, mode: initialMode, messages: legacy });
         setTabs((current) => current.map((tab, index) => index === 0 && tab.messages.length === 0
-          ? { ...tab, messages: legacy, title: firstUserMessage ? titleForMessage(firstUserMessage) : 'Recent conversation' }
+          ? { ...tab, messages: legacy, title: legacyTitle }
           : tab));
       } catch {
         noticeOnPrimary('Saved chats could not be loaded. Chatting still works.');
@@ -198,7 +209,26 @@ export default function ChatWorkspace({
     };
     void restoreHistory();
     return () => { mounted = false; };
-  }, [userId]);
+  }, [userId, scope]);
+
+  useEffect(() => {
+    const refreshLocalChats = () => {
+      const saved = loadLocalConversations(scope);
+      setTabs((current) => {
+        const activeDraft = current.find((tab) => tab.id === activeTabId);
+        const restored: ConversationTab[] = saved.map((row) => ({
+          id: row.id, draftSlot: row.id, title: row.title, mode: row.mode,
+          messages: row.messages, draft: '', pendingImages: [], notice: '',
+        }));
+        if (activeDraft && (activeDraft.messages.length > 0 || activeDraft.draft.trim() || activeDraft.pendingImages.length > 0)) {
+          return [activeDraft, ...restored.filter((row) => row.id !== activeDraft.id)];
+        }
+        return restored.length ? restored : current;
+      });
+    };
+    window.addEventListener('mathdesk:local-data-imported', refreshLocalChats);
+    return () => window.removeEventListener('mathdesk:local-data-imported', refreshLocalChats);
+  }, [scope, activeTabId]);
 
   useEffect(() => () => {
     requestsRef.current.forEach((controller) => controller.abort());
@@ -304,6 +334,7 @@ export default function ChatWorkspace({
       // Closing a tab should still work if storage is unavailable.
     }
     // Closing a conversation also removes its saved copy, like closing a browser tab.
+    if (tabs[index].messages.length > 0) deleteLocalConversation(scope, tabId);
     if (userId && tabs[index].messages.length > 0) void deleteConversation(userId, tabId).catch(() => undefined);
 
     if (tabs.length === 1) {
@@ -364,6 +395,7 @@ export default function ChatWorkspace({
     const messages: ChatMessageRecord[] = [...target.messages, { role: 'user', content: problem }, { role: 'ai', content: reply }];
     const title = target.messages.some((message) => message.role === 'user') ? target.title : titleForMessage(problem);
     updateTab(targetId, (tab) => ({ ...tab, messages, title }));
+    saveLocalConversation(scope, { id: targetId, title, mode: target.mode, messages });
     if (userId) {
       void saveConversation(userId, { id: targetId, title, mode: target.mode, messages })
         .catch(() => updateTab(targetId, (tab) => ({ ...tab, notice: 'This calculation could not be saved to your account.' })));
@@ -455,7 +487,8 @@ export default function ChatWorkspace({
       if (requestsRef.current.get(current.id) === controller) requestsRef.current.delete(current.id);
       markBusy(current.id, false);
     }
-    // Saving is separate from answering: a save problem must not look like an AI failure.
+    // Local history is the default; cloud sync is an optional enhancement for signed-in users.
+    if (answered && !controller.signal.aborted) saveLocalConversation(scope, { id: current.id, title: nextTitle, mode: current.mode, messages: answered });
     if (answered && userId && !controller.signal.aborted) {
       try {
         await saveConversation(userId, { id: current.id, title: nextTitle, mode: current.mode, messages: answered });
@@ -543,7 +576,7 @@ export default function ChatWorkspace({
         <div className="legacy-sidebar-history">
           <div className="legacy-history-title"><h4>Recent Chats</h4></div>
           {tabs.filter((tab) => tab.messages.length > 0).map((tab) => <button type="button" className={`legacy-history-item ${tab.id === activeTab.id ? 'active' : ''}`} key={tab.id} onClick={() => switchTab(tab.id)} title={tab.title}>{tab.title}</button>)}
-          {!tabs.some((tab) => tab.messages.length > 0) && <p className="legacy-history-empty">{signedIn ? 'No saved chats yet.' : 'Log in to see your saved chats.'}</p>}
+          {!tabs.some((tab) => tab.messages.length > 0) && <p className="legacy-history-empty">{signedIn ? 'No saved chats yet.' : 'Chats are saved on this device.'}</p>}
         </div>
 
         <div className="legacy-sidebar-bottom">

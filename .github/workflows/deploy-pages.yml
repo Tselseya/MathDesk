@@ -1,6 +1,8 @@
 name: Deploy MathDesk to GitHub Pages
 
 on:
+  pull_request:
+    branches: [main]
   push:
     branches: [main]
   workflow_dispatch:
@@ -29,6 +31,8 @@ jobs:
         run: npm ci
       - name: Type-check
         run: npm run check
+      - name: Run Vitest
+        run: npm test
       - name: Build production app
         run: npm run build
         env:
@@ -40,6 +44,7 @@ jobs:
           path: dist
 
   deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

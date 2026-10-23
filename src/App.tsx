@@ -147,7 +147,6 @@ function AppContent() {
         <SharedConversationPage
           token={shareToken}
           authReady={authReady}
-          userId={userId}
           onHome={leaveShare}
         />
       </div>

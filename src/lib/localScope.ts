@@ -29,7 +29,9 @@ function removeWhere(predicate: (key: string) => boolean) {
 
 /** Removes everything cached in this browser for one account (called when that account signs out). */
 export function purgeUserData(userId: string) {
-  removeWhere((key) => key === lessonsKey(userId) || key.startsWith(`${DRAFT_PREFIX}${userId}:`));
+  removeWhere((key) => key === lessonsKey(userId)
+    || key === `mathdesk:local-conversations:${userId}`
+    || key.startsWith(`${DRAFT_PREFIX}${userId}:`));
 }
 
 /** Old builds stored drafts without a scope; they may belong to any previous user. */

@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
-import { BookOpen, Cloud, FileText, Plus, Trash2, X } from 'lucide-react';
+import { BookOpen, Cloud, Download, FileText, Plus, Trash2, Upload, X } from 'lucide-react';
 import { useDialogA11y } from '../hooks/useDialogA11y';
 import { MAX_LESSON_CHARS, MAX_LESSON_TITLE_CHARS } from '../lib/limits';
 import { scopeOf } from '../lib/localScope';
 import { deleteCloudLesson, deleteLocalLesson, loadLocalLessons, saveCloudLesson, saveLocalLesson, syncLessons, type SavedLesson } from '../services/lessons';
+import { exportLocalConversations, importLocalConversations } from '../services/localConversations';
 
 interface LessonLibraryProps {
   onClose: () => void;
@@ -19,6 +20,31 @@ export default function LessonLibrary({ onClose, initialContent = '', userId }: 
   const [content, setContent] = useState(initialContent);
   const [notice, setNotice] = useState('');
   const dialogRef = useDialogA11y<HTMLElement>(onClose);
+  const backupInputId = 'mathdesk-local-backup-input';
+
+  function exportBackup() {
+    const backup = { schema: 'mathdesk-local-backup', version: 1, exported_at: new Date().toISOString(), conversations: exportLocalConversations(scope), saved_lessons: loadLocalLessons(scope) };
+    const url = URL.createObjectURL(new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
+    const link = document.createElement('a'); link.href = url; link.download = 'mathdesk-local-backup.json'; link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    setNotice('Your chats and lessons were exported. Keep the backup somewhere safe.');
+  }
+
+  async function importBackup(file?: File) {
+    if (!file) return;
+    try {
+      const data: unknown = JSON.parse(await file.text());
+      if (!data || typeof data !== 'object' || (data as { schema?: unknown }).schema !== 'mathdesk-local-backup' || (data as { version?: unknown }).version !== 1) throw new Error('Choose a MathDesk local backup (version 1).');
+      const backup = data as { conversations?: unknown; saved_lessons?: unknown };
+      if (!Array.isArray(backup.saved_lessons)) throw new Error('The backup does not contain saved lessons.');
+      const chats = importLocalConversations(scope, backup.conversations ?? []);
+      const importedLessons = backup.saved_lessons.filter((item): item is SavedLesson => Boolean(item && typeof item === 'object' && typeof (item as SavedLesson).title === 'string' && typeof (item as SavedLesson).content === 'string'));
+      importedLessons.forEach((item) => saveLocalLesson(scope, item));
+      setLessons(loadLocalLessons(scope));
+      window.dispatchEvent(new CustomEvent('mathdesk:local-data-imported'));
+      setNotice(`Backup imported: ${chats} conversation(s) and ${importedLessons.length} lesson(s). Existing data was kept.`);
+    } catch (error) { setNotice(error instanceof Error ? error.message : 'That backup could not be imported.'); }
+  }
 
   useEffect(() => {
     let active = true;
@@ -35,7 +61,7 @@ export default function LessonLibrary({ onClose, initialContent = '', userId }: 
     setLessons((current) => [lesson, ...current.filter((item) => item.id !== lesson.id)]);
     setTitle('');
     setContent('');
-    if (!userId) { setNotice('Saved on this device. Log in to keep lessons across devices.'); return; }
+    if (!userId) { setNotice('Saved on this device. Export a backup to move it to another browser.'); return; }
     try {
       const cloud = await saveCloudLesson(userId, lesson);
       if (cloud) {
@@ -64,6 +90,11 @@ export default function LessonLibrary({ onClose, initialContent = '', userId }: 
           <button className="tool-close" onClick={onClose} aria-label="Close saved lessons"><X size={18} /></button>
         </header>
         <div className="lesson-form">
+          <div className="lesson-backup-actions">
+            <button type="button" className="secondary-tool-button" onClick={exportBackup}><Download size={15} /> Export chats & lessons</button>
+            <button type="button" className="secondary-tool-button" onClick={() => document.getElementById(backupInputId)?.click()}><Upload size={15} /> Import backup</button>
+            <input id={backupInputId} type="file" accept="application/json,.json" hidden onChange={(event) => { void importBackup(event.currentTarget.files?.[0]); event.currentTarget.value = ''; }} />
+          </div>
           <input value={title} maxLength={MAX_LESSON_TITLE_CHARS} onChange={(event) => setTitle(event.target.value)} placeholder="Lesson title" />
           <textarea value={content} maxLength={MAX_LESSON_CHARS} onChange={(event) => setContent(event.target.value)} placeholder="Paste lesson text, notes, or a solved explanation…" rows={4} />
           <button className="primary-tool-button" onClick={() => void save()}><Plus size={15} /> Save lesson</button>

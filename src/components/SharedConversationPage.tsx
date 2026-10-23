@@ -3,7 +3,6 @@ import { ArrowLeft, LockKeyhole, Share2 } from 'lucide-react';
 import { formatAIReply } from '../lib/formatAIReply';
 import { getSharedConversation, type SharedConversationSnapshot } from '../services/sharing';
 import type { MathDeskMode } from '../types/ai';
-import AuthPanel from './AuthPanel';
 
 const PENDING_SHARE_KEY = 'mathdesk.pending-share-token';
 const modeLabels: Record<MathDeskMode, string> = {
@@ -16,35 +15,25 @@ const modeLabels: Record<MathDeskMode, string> = {
 interface SharedConversationPageProps {
   token: string;
   authReady: boolean;
-  userId: string | null;
   onHome: () => void;
 }
 
-export default function SharedConversationPage({ token, authReady, userId, onHome }: SharedConversationPageProps) {
+export default function SharedConversationPage({ token, authReady, onHome }: SharedConversationPageProps) {
   const [snapshot, setSnapshot] = useState<SharedConversationSnapshot | null>(null);
   const [loading, setLoading] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
 
   useEffect(() => {
     if (!authReady || !token) return undefined;
-    if (!userId) {
-      try { sessionStorage.setItem(PENDING_SHARE_KEY, token); } catch { /* Session storage may be disabled. */ }
-      setSnapshot(null);
-      setLoading(false);
-      setUnavailable(false);
-      return undefined;
-    }
-
-    try { sessionStorage.removeItem(PENDING_SHARE_KEY); } catch { /* The viewer still works without session storage. */ }
     let active = true;
     setLoading(true);
     setUnavailable(false);
-    getSharedConversation(userId, token)
+    getSharedConversation(token)
       .then((result) => { if (active) setSnapshot(result); })
       .catch(() => { if (active) { setSnapshot(null); setUnavailable(true); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [authReady, token, userId]);
+  }, [authReady, token]);
 
   function leaveShare() {
     try { sessionStorage.removeItem(PENDING_SHARE_KEY); } catch { /* Ignore storage restrictions. */ }
@@ -63,15 +52,7 @@ export default function SharedConversationPage({ token, authReady, userId, onHom
         <button type="button" className="shared-home-button" onClick={leaveShare}><ArrowLeft size={16} /> Back to MathDesk</button>
       </header>
 
-      {!authReady ? <section className="shared-message-card" role="status">Checking your sign-in…</section> : !userId ? (
-        <section className="shared-message-card shared-auth-card">
-          <span className="shared-lock-icon"><LockKeyhole size={20} /></span>
-          <p className="eyebrow">Private access</p>
-          <h1>Sign in to view this conversation</h1>
-          <p>This read-only snapshot is available only to signed-in MathDesk users with the link. MathDesk will try to restore the pending link after you sign in; if it does not, reopen the original link.</p>
-          <AuthPanel compact />
-        </section>
-      ) : loading ? (
+      {!authReady ? <section className="shared-message-card" role="status">Preparing shared conversation…</section> : loading ? (
         <section className="shared-message-card" role="status">Loading shared snapshot…</section>
       ) : unavailable || !snapshot ? (
         <section className="shared-message-card shared-error-card" role="alert">

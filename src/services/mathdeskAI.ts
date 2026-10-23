@@ -39,14 +39,14 @@ export function validateRequest(request: MathDeskRequest) {
 }
 
 function messageForStatus(status: number) {
-  if (status === 401) return 'Please sign in to use MathDesk AI.';
+  if (status === 401) return 'MathDesk could not start a guest session. Please try again.';
   if (status === 429) return 'MathDesk AI is at its usage limit right now. Please try again in a few minutes, or tomorrow if it persists.';
   if (status === 413) return 'That message or image is too large. Try something shorter or a smaller image.';
   if (status === 400 || status === 422) return 'That request could not be processed. Please check your message and try again.';
   return 'MathDesk AI is having trouble right now. Please try again in a moment.';
 }
 
-/** The browser only invokes the authenticated Supabase Function. Provider credentials stay server-side. */
+/** The browser invokes the protected Supabase Function with a guest or signed-in session. Provider credentials stay server-side. */
 export class SupabaseMathDeskAI implements MathDeskAIClient {
   private readonly defaultTimeoutMs: number;
 
@@ -65,7 +65,8 @@ export class SupabaseMathDeskAI implements MathDeskAIClient {
     }
     validateRequest(request);
     if (!(await currentUserId())) {
-      throw new MathDeskAIError('Please sign in to use MathDesk AI.', 'configuration');
+      const { error } = await supabase!.auth.signInAnonymously();
+      if (error) throw new MathDeskAIError('Guest AI is not enabled for this project yet. Please try again later.', 'configuration');
     }
 
     const controller = new AbortController();

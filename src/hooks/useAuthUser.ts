@@ -30,8 +30,8 @@ export function useAuthUser(): AuthUserState {
       setState((current) => (current.ready && current.userId === nextId ? current : { ready: true, userId: nextId }));
     };
 
-    supabase.auth.getSession().then(({ data }) => apply(data.session?.user.id ?? null)).catch(() => apply(null));
-    const { data } = supabase.auth.onAuthStateChange((_event, session) => apply(session?.user.id ?? null));
+    supabase.auth.getSession().then(({ data }) => apply(data.session?.user && !data.session.user.is_anonymous ? data.session.user.id : null)).catch(() => apply(null));
+    const { data } = supabase.auth.onAuthStateChange((_event, session) => apply(session?.user && !session.user.is_anonymous ? session.user.id : null));
     return () => {
       active = false;
       data.subscription.unsubscribe();
