@@ -25,10 +25,12 @@ type Mode = 'login' | 'signup' | 'forgot' | 'recovery' | 'account' | 'settings';
 
 const MIN_PASSWORD = 8;
 
-function friendlyAuthError(error: unknown, context: 'login' | 'signup' | 'update'): string {
+export function friendlyAuthError(error: unknown, context: 'login' | 'signup' | 'update'): string {
   const message = error instanceof Error ? error.message.toLowerCase() : '';
   const status = (error as { status?: number } | null)?.status;
+  const code = String((error as { code?: unknown; error_code?: unknown } | null)?.code ?? (error as { error_code?: unknown } | null)?.error_code ?? '').toLowerCase();
   if (status === 429 || message.includes('rate limit') || message.includes('too many')) return 'Too many attempts. Please wait a few minutes and try again.';
+  if (code.includes('captcha') || message.includes('captcha')) return 'Sign-in is blocked by CAPTCHA protection. The site owner must configure CAPTCHA for MathDesk or turn it off in Supabase Auth settings.';
   if (message.includes('failed to fetch') || message.includes('network')) return 'Could not reach the sign-in service. Check your connection and try again.';
   if (context === 'login') {
     if (message.includes('not confirmed')) return 'Please confirm your email first. Check your inbox for the confirmation link.';
