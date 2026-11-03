@@ -27,7 +27,7 @@ See [`docs/EDGE-FUNCTION-SETUP.md`](./docs/EDGE-FUNCTION-SETUP.md) for the compl
 
 1. Apply `supabase/migrations/20261012094923_ai_rate_limits.sql`.
 2. Set `GROQ_API_KEY` and `GROQ_MODEL` as Supabase Edge Function secrets.
-3. Deploy `supabase/functions/mathdesk-ai` with JWT verification enabled.
+3. Deploy `supabase/functions/mathdesk-ai`; the function performs `auth.getUser` validation inside the handler because the project uses ES256 access tokens.
 4. Verify unauthenticated requests return `401`.
 5. Verify an authenticated request returns a non-empty reply.
 6. Verify the browser network panel shows only the Supabase Function URL.
@@ -36,7 +36,7 @@ The function requires a signed-in Supabase user. The provider key stays server-s
 
 ## GitHub Pages deployment
 
-The repository includes `.github/workflows/deploy-pages.yml`. Every push to `main` builds and deploys the `dist/` artifact through GitHub Pages. Configure these GitHub Actions secrets:
+The repository includes `.github/workflows/deploy-pages.yml`. Every push to `main` runs tests, type-checks, builds, verifies the compiled artifact, and deploys `dist/` through GitHub Pages. Configure these GitHub Actions secrets:
 
 ```text
 VITE_SUPABASE_URL
@@ -44,6 +44,20 @@ VITE_SUPABASE_ANON_KEY
 ```
 
 After the Edge Function is verified, remove obsolete `VITE_N8N_WEBHOOK_URL` and `VITE_MATHDESK_API_URL` secrets from GitHub Actions. They are no longer read by the app or workflow.
+
+Before relying on the deployment, configure GitHub Pages to use **GitHub Actions** as its source rather than the repository branch root. Branch-root mode can serve stale committed `index.html` and hashed assets instead of the artifact produced by the workflow. After a deployment, compare the asset hashes in the live HTML with the successful workflow artifact.
+
+The local release sequence is:
+
+```bash
+npm ci
+npm test
+npm run check
+npm run build
+npm run verify-build
+```
+
+`verify-build` confirms that `dist/index.html` references existing compiled assets, includes the production CSP, includes the manifest and service worker, and does not expose retired n8n, ngrok, or direct Groq provider endpoints.
 
 ## Upload to an Apache host
 
