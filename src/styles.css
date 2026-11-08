@@ -135,6 +135,8 @@ html[data-motion="reduced"] .workspace-card:hover, html[data-motion="reduced"] .
 .auth-google:disabled { opacity: .58; cursor: not-allowed; }
 .auth-google-mark { display: grid; place-items: center; width: 20px; height: 20px; color: #4285f4; font-size: 1.1rem; font-weight: 900; }
 .auth-provider-note { margin: 9px 0 0; color: var(--muted); font-size: .74rem; line-height: 1.5; text-align: center; }
+.auth-captcha { display: flex; justify-content: center; min-height: 78px; margin: 14px 0 4px; overflow: hidden; }
+.auth-captcha iframe { max-width: 100%; }
 .auth-inline-notice { color: #a33b4c; font-size: .75rem; }
 .tool-emoji img { display: block; width: 26px; height: 26px; object-fit: contain; }
 .tool-emoji svg { color: var(--blue); }

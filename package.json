@@ -8,9 +8,11 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 0.0.0.0",
     "check": "tsc --noEmit",
-    "test": "vitest run --config vitest.config.ts"
+    "test": "vitest run --config vitest.config.ts",
+    "verify-build": "node scripts/verify-build.mjs"
   },
   "dependencies": {
+    "@hcaptcha/react-hcaptcha": "^1.6.0",
     "@supabase/supabase-js": "2.116.0",
     "lucide-react": "1.47.0",
     "react": "19.3.0",
@@ -22,7 +24,7 @@
     "@types/react-dom": "19.3.0",
     "@vitejs/plugin-react": "6.1.1",
     "typescript": "7.0.2",
-    "vite": "8.3.0",
-    "vitest": "4.1.11"
+    "vite": "8.3.5",
+    "vitest": "4.1.12"
   }
 }

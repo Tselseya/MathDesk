@@ -15,12 +15,12 @@ function contentSecurityPolicy(env: Record<string, string>): Plugin {
   const connect = ["'self'", supabase, supabaseSocket, 'https://api.pwnedpasswords.com'].filter(Boolean);
   const policy = [
     "default-src 'self'",
-    "script-src 'self'",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
+    "script-src 'self' https://js.hcaptcha.com https://hcaptcha.com https://*.hcaptcha.com",
+    "style-src 'self' 'unsafe-inline' https://hcaptcha.com https://*.hcaptcha.com",
+    "img-src 'self' data: blob: https://hcaptcha.com https://*.hcaptcha.com",
     "font-src 'self' data:",
-    `connect-src ${Array.from(new Set(connect)).join(' ')}`,
-    "frame-src https://www.geogebra.org https://*.geogebra.org",
+    `connect-src ${Array.from(new Set([...connect, 'https://hcaptcha.com', 'https://*.hcaptcha.com'])).join(' ')}`,
+    "frame-src https://www.geogebra.org https://*.geogebra.org https://hcaptcha.com https://*.hcaptcha.com",
     "media-src 'self' blob:",
     "worker-src 'self'",
     "manifest-src 'self'",

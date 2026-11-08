@@ -24,5 +24,9 @@ jobs:
         run: npm ci
       - name: Type-check
         run: npm run check
+      - name: Test
+        run: npm test
       - name: Build
         run: npm run build
+      - name: Verify production artifact
+        run: npm run verify-build

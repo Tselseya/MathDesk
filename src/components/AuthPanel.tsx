@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
 import { createPortal } from 'react-dom';
+import HCaptcha from '@hcaptcha/react-hcaptcha';
 import { Download, LogIn, LogOut, Trash2, UserPlus, X } from 'lucide-react';
 import {
   deleteMyAccount,
@@ -25,10 +26,12 @@ type Mode = 'login' | 'signup' | 'forgot' | 'recovery' | 'account' | 'settings';
 
 const MIN_PASSWORD = 8;
 
-function friendlyAuthError(error: unknown, context: 'login' | 'signup' | 'update'): string {
+export function friendlyAuthError(error: unknown, context: 'login' | 'signup' | 'update'): string {
   const message = error instanceof Error ? error.message.toLowerCase() : '';
   const status = (error as { status?: number } | null)?.status;
+  const code = String((error as { code?: unknown; error_code?: unknown } | null)?.code ?? (error as { error_code?: unknown } | null)?.error_code ?? '').toLowerCase();
   if (status === 429 || message.includes('rate limit') || message.includes('too many')) return 'Too many attempts. Please wait a few minutes and try again.';
+  if (code.includes('captcha') || message.includes('captcha')) return 'Sign-in is blocked by CAPTCHA protection. The site owner must configure CAPTCHA for MathDesk or turn it off in Supabase Auth settings.';
   if (message.includes('failed to fetch') || message.includes('network')) return 'Could not reach the sign-in service. Check your connection and try again.';
   if (context === 'login') {
     if (message.includes('not confirmed')) return 'Please confirm your email first. Check your inbox for the confirmation link.';
@@ -49,9 +52,12 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
   const [userLabel, setUserLabel] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
+  const [captchaToken, setCaptchaToken] = useState('');
   const [googleEnabled, setGoogleEnabled] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const firstInputRef = useRef<HTMLInputElement>(null);
+  const captchaRef = useRef<HCaptcha>(null);
+  const captchaSiteKey = import.meta.env.VITE_HCAPTCHA_SITEKEY || '';
 
   useEffect(() => {
     let active = true;
@@ -103,6 +109,8 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     setPassword('');
     setConfirm('');
     setDeleteText('');
+    setCaptchaToken('');
+    captchaRef.current?.resetCaptcha();
   }
 
   async function passwordAllowed(candidate: string) {
@@ -123,10 +131,13 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
 
     if (mode === 'forgot') {
       if (!email.trim()) { setNotice('Enter the email you signed up with.'); return; }
+      if (captchaSiteKey && !captchaToken) { setNotice('Complete the CAPTCHA check before continuing.'); return; }
       setBusy(true); setNotice('');
-      try { await requestPasswordReset(email.trim()); } catch { /* Same message either way, so accounts cannot be probed. */ }
+      try { await requestPasswordReset(email.trim(), captchaToken || undefined); } catch { /* Same message either way, so accounts cannot be probed. */ }
       setNotice('If an account exists for that email, a reset link is on its way. Check your inbox and spam folder.');
       setBusy(false);
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken('');
       return;
     }
 
@@ -155,15 +166,16 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
       setNotice(`Use a password with at least ${MIN_PASSWORD} characters.`); return;
     }
     if (mode === 'signup' && !(await passwordAllowed(password))) return;
+    if (captchaSiteKey && !captchaToken) { setNotice('Complete the CAPTCHA check before continuing.'); return; }
     setBusy(true); setNotice('');
     try {
       if (mode === 'signup') {
-        const { data, error } = await signUp(name.trim(), email.trim(), password);
+        const { data, error } = await signUp(name.trim(), email.trim(), password, captchaToken || undefined);
         if (error) throw error;
         if (data.session) setOpen(false);
         else setNotice('Check your email to confirm your account, then log in.');
       } else {
-        const { data, error } = await signIn(email.trim(), password);
+        const { data, error } = await signIn(email.trim(), password, captchaToken || undefined);
         if (error) throw error;
         if (!data.session) throw new Error('No session was created.');
         setOpen(false);
@@ -171,7 +183,11 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
       setPassword('');
     } catch (error) {
       setNotice(friendlyAuthError(error, mode === 'signup' ? 'signup' : 'login'));
-    } finally { setBusy(false); }
+    } finally {
+      setBusy(false);
+      captchaRef.current?.resetCaptcha();
+      setCaptchaToken('');
+    }
   }
 
   async function logout() {
@@ -272,6 +288,15 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
         {(mode === 'login' || mode === 'signup' || mode === 'forgot') && <label className="auth-label">Email<input ref={mode === 'signup' ? undefined : firstInputRef} value={email} maxLength={254} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" required /></label>}
         {(mode === 'login' || mode === 'signup' || mode === 'recovery') && <label className="auth-label">{mode === 'recovery' ? 'New password' : 'Password'}<input ref={mode === 'recovery' ? firstInputRef : undefined} value={password} maxLength={128} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'login' ? undefined : MIN_PASSWORD} required /></label>}
         {mode === 'recovery' && <label className="auth-label">Confirm new password<input value={confirm} maxLength={128} onChange={(event) => setConfirm(event.target.value)} type="password" autoComplete="new-password" minLength={MIN_PASSWORD} required /></label>}
+        {(mode === 'login' || mode === 'signup' || mode === 'forgot') && captchaSiteKey && <div className="auth-captcha" aria-label="CAPTCHA verification">
+          <HCaptcha
+            ref={captchaRef}
+            sitekey={captchaSiteKey}
+            onVerify={(token) => { setCaptchaToken(token); setNotice(''); }}
+            onExpire={() => setCaptchaToken('')}
+            onError={() => { setCaptchaToken(''); setNotice('CAPTCHA could not load. Check your connection and try again.'); }}
+          />
+        </div>}
         {notice && <p className="auth-notice" role="alert">{notice}</p>}
         <button type="submit" className="auth-submit" disabled={busy || !supabaseConfigured}>
           {mode === 'signup' ? <UserPlus size={16} /> : <LogIn size={16} />}
