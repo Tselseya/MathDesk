@@ -26,14 +26,14 @@ export const supabase: SupabaseClient | null = supabaseConfigured ? createClient
 
 const MODES: MathDeskMode[] = ['solve', 'learn', 'practice', 'deskbot'];
 
-export async function signUp(name: string, email: string, password: string) {
+export async function signUp(name: string, email: string, password: string, captchaToken?: string) {
   if (!supabase) throw new Error('Supabase is not configured. Add the Supabase variables to .env.local.');
-  return supabase.auth.signUp({ email, password, options: { data: { name } } });
+  return supabase.auth.signUp({ email, password, options: { data: { name }, captchaToken } });
 }
 
-export async function signIn(email: string, password: string) {
+export async function signIn(email: string, password: string, captchaToken?: string) {
   if (!supabase) throw new Error('Supabase is not configured. Add the Supabase variables to .env.local.');
-  return supabase.auth.signInWithPassword({ email, password });
+  return supabase.auth.signInWithPassword({ email, password, options: { captchaToken } });
 }
 
 export async function signOut() {
@@ -60,9 +60,9 @@ export function onAuthChange(callback: (event: AuthChangeEvent, session: Session
 }
 
 /** Sends a password-reset email. The link returns to the site root, where a PASSWORD_RECOVERY event fires. */
-export async function requestPasswordReset(email: string) {
+export async function requestPasswordReset(email: string, captchaToken?: string) {
   if (!supabase) throw new Error('Sign-in is temporarily unavailable.');
-  return supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/` });
+  return supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}/`, captchaToken });
 }
 
 export async function updatePassword(password: string) {

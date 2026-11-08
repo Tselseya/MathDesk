@@ -41,6 +41,7 @@ The repository includes `.github/workflows/deploy-pages.yml`. Every push to `mai
 ```text
 VITE_SUPABASE_URL
 VITE_SUPABASE_ANON_KEY
+VITE_HCAPTCHA_SITEKEY
 ```
 
 After the Edge Function is verified, remove obsolete `VITE_N8N_WEBHOOK_URL` and `VITE_MATHDESK_API_URL` secrets from GitHub Actions. They are no longer read by the app or workflow.
@@ -58,6 +59,18 @@ npm run verify-build
 ```
 
 `verify-build` confirms that `dist/index.html` references existing compiled assets, includes the production CSP, includes the manifest and service worker, and does not expose retired n8n, ngrok, or direct Groq provider endpoints.
+
+### hCaptcha configuration
+
+MathDesk uses hCaptcha for Supabase email/password login, signup, and password reset:
+
+1. Create or use an hCaptcha site for `app.mathdesk.page.gd` and obtain its public **site key**.
+2. Add the site key as the GitHub Actions secret `VITE_HCAPTCHA_SITEKEY`. It is intentionally public in the browser bundle.
+3. Keep the hCaptcha **secret key** only in Supabase Dashboard → Authentication → Attack Protection → Captcha secret. Never put it in a `VITE_*` variable or commit it.
+4. Keep CAPTCHA protection enabled in Supabase after the site key and secret are both configured.
+5. Test login, signup, and password reset on the deployed domain. Complete the hCaptcha challenge before submitting each form.
+
+If the site key is absent, the frontend cannot produce a token and Supabase returns `captcha_failed` with `no captcha_token found`.
 
 ## Upload to an Apache host
 
