@@ -39,6 +39,10 @@ if (!html.includes('Content-Security-Policy')) {
   fail('Generated index is missing the production Content-Security-Policy meta tag.');
 }
 
+for (const origin of ['https://js.hcaptcha.com', 'https://*.hcaptcha.com']) {
+  if (!html.includes(origin)) fail(`Generated CSP is missing the hCaptcha origin: ${origin}`);
+}
+
 if (!process.exitCode) {
   console.log(`Build artifact verified: ${assetReferences.length} compiled assets, manifest, service worker, CSP, and endpoint exposure checks passed.`);
 }
