@@ -1,9 +1,10 @@
-# Response headers. GitHub Pages ignores this file (it cannot send custom headers), so on the current host it does nothing.
-# Netlify and Cloudflare Pages read it, so keeping it in the repo makes a later move to either host a one-step change.
+# GitHub Pages ignores this file. Netlify and Cloudflare Pages apply it at deploy time.
+# The HTML meta CSP remains as a GitHub Pages fallback; this response policy adds
+# header-only controls such as frame-ancestors and HSTS.
 /*
-  Strict-Transport-Security: max-age=15552000
+  Strict-Transport-Security: max-age=31536000; includeSubDomains
   X-Content-Type-Options: nosniff
   X-Frame-Options: DENY
-  Content-Security-Policy: frame-ancestors 'none'
+  Content-Security-Policy: default-src 'self'; script-src 'self' https://js.hcaptcha.com https://hcaptcha.com https://*.hcaptcha.com; style-src 'self' 'unsafe-inline' https://hcaptcha.com https://*.hcaptcha.com; img-src 'self' data: blob: https://hcaptcha.com https://*.hcaptcha.com; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.pwnedpasswords.com https://hcaptcha.com https://*.hcaptcha.com; frame-src https://www.geogebra.org https://*.geogebra.org https://hcaptcha.com https://*.hcaptcha.com; media-src 'self' blob:; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: camera=(self), microphone=(), geolocation=()
