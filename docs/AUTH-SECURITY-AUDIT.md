@@ -39,7 +39,9 @@ Results for the configured production build:
 
 **Impact:** Clickjacking protection, HSTS, MIME-sniffing protection, and response-level CSP are weaker than the repository configuration suggests. The CSP meta tag still applies after parsing, but it is not equivalent to a response header and cannot express all header-only protections.
 
-**Recommendation:** Move production hosting to Cloudflare Pages or Netlify, or place the GitHub Pages site behind a reverse proxy/CDN that applies the intended headers. Re-run the live audit after migration and require zero header warnings before calling the hosting layer hardened.
+**Mitigation prepared:** `public/_headers` now contains a complete portable response policy for Cloudflare Pages and Netlify, including HSTS, CSP with `frame-ancestors`, clickjacking protection, MIME-sniffing protection, referrer policy, and permissions policy. GitHub Pages will continue to ignore it.
+
+**Recommendation:** Deploy the same `main` branch to Cloudflare Pages or Netlify, then re-run the live audit and require zero header warnings before calling the hosting layer hardened.
 
 ### LOW — Calculator uses a dynamic `Function` evaluator
 
