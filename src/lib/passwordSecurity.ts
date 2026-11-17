@@ -4,6 +4,17 @@ type FetchLike = (input: RequestInfo | URL, init?: RequestInit) => Promise<Respo
 
 const HIBP_RANGE_ENDPOINT = 'https://api.pwnedpasswords.com/range/';
 
+export const PASSWORD_POLICY_MESSAGE = 'Use at least 8 characters, including an uppercase letter, a lowercase letter, a number, and a symbol.';
+
+export function getPasswordPolicyError(password: string): string | null {
+  if (password.length < 8) return PASSWORD_POLICY_MESSAGE;
+  if (!/\p{Lu}/u.test(password)) return PASSWORD_POLICY_MESSAGE;
+  if (!/\p{Ll}/u.test(password)) return PASSWORD_POLICY_MESSAGE;
+  if (!/\p{N}/u.test(password)) return PASSWORD_POLICY_MESSAGE;
+  if (!/[^\p{L}\p{N}]/u.test(password)) return PASSWORD_POLICY_MESSAGE;
+  return null;
+}
+
 async function sha1UpperHex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-1', new TextEncoder().encode(value));
   return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('').toUpperCase();

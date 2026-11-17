@@ -16,7 +16,7 @@ import {
   supabaseConfigured,
   updatePassword,
 } from '../services/supabase';
-import { checkPasswordAgainstBreaches } from '../lib/passwordSecurity';
+import { checkPasswordAgainstBreaches, getPasswordPolicyError, PASSWORD_POLICY_MESSAGE } from '../lib/passwordSecurity';
 import AccountPopover from './AccountPopover';
 import MotionToggle from './MotionToggle';
 import ThemeToggle from './ThemeToggle';
@@ -37,7 +37,7 @@ export function friendlyAuthError(error: unknown, context: 'login' | 'signup' | 
     if (message.includes('not confirmed')) return 'Please confirm your email first. Check your inbox for the confirmation link.';
     return 'That email and password do not match.';
   }
-  if (context === 'signup') return `We could not create that account. If you already have one, log in or reset your password. Passwords need at least ${MIN_PASSWORD} characters.`;
+  if (context === 'signup') return `We could not create that account. If you already have one, log in or reset your password. ${PASSWORD_POLICY_MESSAGE}`;
   return 'Could not update the password. The reset link may have expired, so request a new one.';
 }
 
@@ -142,7 +142,8 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     }
 
     if (mode === 'recovery') {
-      if (password.length < MIN_PASSWORD) { setNotice(`Use a password with at least ${MIN_PASSWORD} characters.`); return; }
+      const policyError = getPasswordPolicyError(password);
+      if (policyError) { setNotice(policyError); return; }
       if (password !== confirm) { setNotice('The two passwords do not match.'); return; }
       if (!(await passwordAllowed(password))) return;
       setBusy(true); setNotice('');
@@ -162,8 +163,9 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     if (!email.trim() || !password || (mode === 'signup' && !name.trim())) {
       setNotice('Please complete all required fields.'); return;
     }
-    if (mode === 'signup' && password.length < MIN_PASSWORD) {
-      setNotice(`Use a password with at least ${MIN_PASSWORD} characters.`); return;
+    if (mode === 'signup') {
+      const policyError = getPasswordPolicyError(password);
+      if (policyError) { setNotice(policyError); return; }
     }
     if (mode === 'signup' && !(await passwordAllowed(password))) return;
     if (captchaSiteKey && !captchaToken) { setNotice('Complete the CAPTCHA check before continuing.'); return; }
@@ -257,7 +259,7 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
     login: 'Continue your saved learning sessions.',
     signup: 'Save lessons and chat history across devices.',
     forgot: 'We will email you a link to set a new password.',
-    recovery: `Use at least ${MIN_PASSWORD} characters.`,
+    recovery: PASSWORD_POLICY_MESSAGE,
     account: userLabel,
     settings: 'Adjust how MathDesk looks and moves.',
   };
@@ -287,6 +289,7 @@ export default function AuthPanel({ compact = false }: AuthPanelProps) {
         {mode === 'signup' && <label className="auth-label">Name<input ref={firstInputRef} value={name} maxLength={80} onChange={(event) => setName(event.target.value)} autoComplete="name" required /></label>}
         {(mode === 'login' || mode === 'signup' || mode === 'forgot') && <label className="auth-label">Email<input ref={mode === 'signup' ? undefined : firstInputRef} value={email} maxLength={254} onChange={(event) => setEmail(event.target.value)} type="email" autoComplete="email" required /></label>}
         {(mode === 'login' || mode === 'signup' || mode === 'recovery') && <label className="auth-label">{mode === 'recovery' ? 'New password' : 'Password'}<input ref={mode === 'recovery' ? firstInputRef : undefined} value={password} maxLength={128} onChange={(event) => setPassword(event.target.value)} type="password" autoComplete={mode === 'login' ? 'current-password' : 'new-password'} minLength={mode === 'login' ? undefined : MIN_PASSWORD} required /></label>}
+        {(mode === 'signup' || mode === 'recovery') && <p className="auth-provider-note">{PASSWORD_POLICY_MESSAGE}</p>}
         {mode === 'recovery' && <label className="auth-label">Confirm new password<input value={confirm} maxLength={128} onChange={(event) => setConfirm(event.target.value)} type="password" autoComplete="new-password" minLength={MIN_PASSWORD} required /></label>}
         {(mode === 'login' || mode === 'signup' || mode === 'forgot') && captchaSiteKey && <div className="auth-captcha" aria-label="CAPTCHA verification">
           <HCaptcha
