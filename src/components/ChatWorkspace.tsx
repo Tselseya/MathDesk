@@ -476,9 +476,8 @@ export default function ChatWorkspace({
   const currentBusy = busyTabIds.has(activeTab.id);
 
   return (
-    <section
+    <div
       className={`legacy-chat-shell restored-chat ${sidebarCollapsed ? 'sidebar-collapsed' : ''} ${mobileSidebarOpen ? 'mobile-sidebar-open' : ''}`}
-      aria-label="MathDesk AI chatbox"
     >
       {mobileSidebarOpen && <button type="button" className="chat-sidebar-scrim" aria-label="Close navigation" onClick={() => setMobileSidebarOpen(false)} />}
       <aside className="legacy-chat-sidebar" id="chat-navigation">
@@ -540,7 +539,7 @@ export default function ChatWorkspace({
           </button>
         </div>
 
-        <div className="legacy-sidebar-history">
+        <div className="legacy-sidebar-history" tabIndex={0} aria-label="Recent chats">
           <div className="legacy-history-title"><h4>Recent Chats</h4></div>
           {tabs.filter((tab) => tab.messages.length > 0).map((tab) => <button type="button" className={`legacy-history-item ${tab.id === activeTab.id ? 'active' : ''}`} key={tab.id} onClick={() => switchTab(tab.id)} title={tab.title}>{tab.title}</button>)}
           {!tabs.some((tab) => tab.messages.length > 0) && <p className="legacy-history-empty">{signedIn ? 'No saved chats yet.' : 'Log in to see your saved chats.'}</p>}
@@ -567,7 +566,7 @@ export default function ChatWorkspace({
             </button>
           )}
           <div className="legacy-chat-header-info">
-            <div className="legacy-header-title"><div><h3>MathDesk AI</h3><p>Upload or type a problem to get started</p></div></div>
+            <div className="legacy-header-title"><div><h1>MathDesk AI</h1><p>Upload or type a problem to get started</p></div></div>
           </div>
           <div className="chat-header-actions">
             <span className="legacy-mode-badge">{currentModeLabel}</span>
@@ -578,7 +577,7 @@ export default function ChatWorkspace({
           </div>
         </header>
 
-        <div className="legacy-tab-bar" role="tablist" aria-label="Conversations">
+        <div className="legacy-tab-bar" role="group" aria-label="Conversations">
           {tabs.map((tab, index) => {
             const selected = tab.id === activeTab.id;
             return (
@@ -587,9 +586,7 @@ export default function ChatWorkspace({
                   type="button"
                   className={`legacy-tab ${selected ? 'active' : ''}`}
                   id={`chat-tab-${tab.id}`}
-                  role="tab"
-                  aria-selected={selected}
-                  aria-controls="conversation-panel"
+                  aria-pressed={selected}
                   title={tab.title}
                   tabIndex={selected ? 0 : -1}
                   onClick={() => switchTab(tab.id)}
@@ -621,7 +618,7 @@ export default function ChatWorkspace({
           </button>
         </div>
 
-        <div className="legacy-chat-messages" id="conversation-panel" role="tabpanel" aria-labelledby={`chat-tab-${activeTab.id}`} aria-live="polite">
+        <div className="legacy-chat-messages" aria-label="Conversation messages" aria-live="polite">
           <article className="legacy-message ai welcome-message"><div className="legacy-msg-avatar" aria-hidden="true">🤖</div><div className="legacy-msg-bubble"><p>👋 Hi! I'm MathDesk AI. I can help you in three ways:</p><p><strong>🔍 Solve:</strong> paste or photo a problem and I'll solve it with full steps<br /><strong>📖 Learn:</strong> upload a lesson and I'll explain it and give you examples<br /><strong>✏️ Practice:</strong> tell me a topic and I'll generate practice problems</p><p>Pick a mode on the left, or just start typing!</p></div></article>
           <div className="legacy-quick-actions"><button type="button" onClick={() => { updateTab(activeTab.id, (tab) => ({ ...tab, mode: 'solve' })); chooseRecentChat('Solve: x² + 5x + 6 = 0'); }}>Try a sample problem</button><button type="button" onClick={() => { updateTab(activeTab.id, (tab) => ({ ...tab, mode: 'practice' })); chooseRecentChat('Generate 3 practice problems on derivatives'); }}>Generate practice</button></div>
           {activeTab.messages.map((message, index) => (
@@ -770,6 +767,6 @@ export default function ChatWorkspace({
         }}
         onUploadPhoto={() => fileInputRef.current?.click()}
       />
-    </section>
+    </div>
   );
 }

@@ -37,12 +37,13 @@ h2 { margin: 0; color: var(--ink); font-size: clamp(1.35rem, 3vw, 2rem); letter-
 .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .mode-card { min-height: 105px; padding: 15px; text-align: left; color: var(--muted); border: 1px solid var(--line); border-radius: 17px; background: #f8faff; cursor: pointer; transition: transform .16s var(--ease-out), border-color .16s var(--ease-out), background .16s var(--ease-out), box-shadow .16s var(--ease-out); }
 .mode-card:hover { transform: translateY(-3px); border-color: #92aef5; }
-.mode-card.active { color: white; border-color: var(--blue); background: linear-gradient(145deg, var(--blue), #3978ee); box-shadow: 0 12px 26px rgba(36,89,230,.22); }
+.mode-card.active { color: white; border-color: var(--blue); background: linear-gradient(145deg, var(--blue), #2f63d3); box-shadow: 0 12px 26px rgba(36,89,230,.22); }
 .mode-card strong, .mode-card span { display: block; }
 .mode-card strong { margin-bottom: 8px; font-size: 1.02rem; }
-.mode-card span { font-size: .78rem; line-height: 1.4; opacity: .82; }
+.mode-card span { font-size: .78rem; line-height: 1.4; opacity: 1; }
 .prompt-row { display: flex; gap: 10px; align-items: flex-end; margin-top: 16px; padding: 9px; border: 1px solid var(--line); border-radius: 19px; background: white; }
 textarea { flex: 1; resize: vertical; min-height: 60px; padding: 11px; color: var(--ink); border: 0; outline: 0; background: transparent; line-height: 1.5; }
+#homepage-prompt::placeholder { color: #52617a; opacity: 1; }
 .send-button { display: grid; place-items: center; width: 44px; height: 44px; flex: 0 0 44px; color: white; border: 0; border-radius: 14px; background: var(--blue); cursor: pointer; transition: transform .16s var(--ease-out), background .16s var(--ease-out); }
 .send-button:hover { background: #1744bd; transform: translateY(-2px); }
 .send-button:active, .icon-link:active, .mode-card:active { transform: scale(.97); }
@@ -485,7 +486,7 @@ html[data-motion="reduced"] .directory-card.reveal-on-scroll { opacity: 1; trans
    LAUNCH-READINESS ADDITIONS (account dialog, notices, legal)
    ========================================================== */
 .chat-loading { padding: 48px 16px; color: #4b5563; text-align: center; }
-.chat-privacy-note { margin: 4px 14px 8px; color: #6b7280; font-size: .72rem; line-height: 1.4; }
+.chat-privacy-note { margin: 4px 14px 8px; color: #4b5563; font-size: .72rem; line-height: 1.4; }
 .chat-privacy-note a, .footer a, .auth-legal a { color: #1a56db; }
 .chat-count { color: #b45309; font-variant-numeric: tabular-nums; }
 .graph-status { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0; padding: 10px 16px; color: #4b5563; background: #f0f4ff; font-size: .85rem; }
@@ -1259,7 +1260,7 @@ html[data-motion='reduced'] .footer-contact-links a { transition: none; }
 .chat-primary-nav svg, .chat-sidebar-tools svg { flex: 0 0 auto; }
 .restored-chat .legacy-new-conversation { width: 100%; min-height: 42px; padding: 9px 12px; display: flex; align-items: center; gap: 10px; color: white; border: 0; border-radius: 12px; background: linear-gradient(135deg, #2459e6, #2876e8); box-shadow: 0 7px 17px rgba(36, 89, 230, .16); cursor: pointer; font: inherit; font-size: .82rem; font-weight: 800; text-align: left; }
 .restored-chat .legacy-new-conversation:hover { filter: brightness(.97); }
-.chat-sidebar-group-label { margin: 4px 8px 7px; color: #8997b4; font-size: .65rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.chat-sidebar-group-label { margin: 4px 8px 7px; color: #52617a; font-size: .65rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
 .restored-chat .legacy-mode-select { display: grid; gap: 3px; padding: 14px 0 8px; }
 .restored-chat .legacy-mode-btn { width: 100%; min-height: 43px; padding: 7px 10px; display: flex; align-items: center; gap: 10px; color: #586990; border: 1px solid transparent; border-radius: 11px; background: transparent; cursor: pointer; text-align: left; }
 .restored-chat .legacy-mode-btn:hover { color: var(--blue); background: #edf3ff; }
@@ -1267,26 +1268,26 @@ html[data-motion='reduced'] .footer-contact-links a { transition: none; }
 .restored-chat .legacy-mode-btn > svg, .restored-chat .legacy-mode-icon { width: 19px; height: 19px; flex: 0 0 19px; display: grid; place-items: center; color: var(--blue); }
 .restored-chat .legacy-mode-btn strong, .restored-chat .legacy-mode-btn small { display: block; }
 .restored-chat .legacy-mode-btn strong { font-size: .78rem; }
-.restored-chat .legacy-mode-btn small { margin-top: 2px; color: #8693ae; font-size: .64rem; }
+.restored-chat .legacy-mode-btn small { margin-top: 2px; color: #53627c; font-size: .64rem; }
 .chat-sidebar-tools { display: grid; gap: 3px; padding: 4px 0 10px; }
 .chat-sidebar-tools button { min-height: 37px; padding: 7px 10px; display: flex; align-items: center; gap: 10px; color: #586990; border: 1px solid transparent; border-radius: 10px; background: transparent; cursor: pointer; font: inherit; font-size: .78rem; font-weight: 700; text-align: left; }
 .chat-sidebar-tools button:hover { color: var(--blue); background: #edf3ff; }
 .restored-chat .legacy-sidebar-history { min-height: 90px; margin-top: 5px; padding-top: 9px; flex: 1 1 auto; border-top: 1px solid rgba(43, 83, 175, .1); overflow-y: auto; }
 .restored-chat .legacy-history-title { padding: 3px 8px 8px; }
-.restored-chat .legacy-history-title h4 { color: #8997b4; font-size: .65rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
+.restored-chat .legacy-history-title h4 { color: #52617a; font-size: .65rem; font-weight: 850; letter-spacing: .1em; text-transform: uppercase; }
 .restored-chat .legacy-history-item { width: 100%; min-height: 34px; margin: 2px 0; padding: 7px 9px; overflow: hidden; color: #627195; border: 0; border-radius: 9px; background: transparent; cursor: pointer; font-size: .72rem; text-align: left; text-overflow: ellipsis; white-space: nowrap; }
 .restored-chat .legacy-history-item:hover, .restored-chat .legacy-history-item.active { color: var(--blue); background: #edf3ff; }
-.restored-chat .legacy-history-empty { padding: 5px 8px; color: #96a1b8; font-size: .69rem; line-height: 1.45; }
+.restored-chat .legacy-history-empty { padding: 5px 8px; color: #53627c; font-size: .69rem; line-height: 1.45; }
 .restored-chat .legacy-sidebar-bottom { display: grid; gap: 9px; padding: 12px 3px 0; border-top: 1px solid rgba(43, 83, 175, .1); }
-.restored-chat .legacy-support-link { min-height: 34px; display: flex; align-items: center; gap: 9px; color: #657493; font-size: .75rem; font-weight: 700; text-decoration: none; }
+.restored-chat .legacy-support-link { min-height: 34px; display: flex; align-items: center; gap: 9px; color: #40536f; font-size: .75rem; font-weight: 700; text-decoration: none; }
 .restored-chat .legacy-support-link:hover { color: var(--blue); }
 .restored-chat .legacy-sidebar-bottom .auth-button { width: 100%; justify-content: center; }
 .restored-chat .legacy-sidebar-bottom .auth-session { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: .68rem; }
 .restored-chat .legacy-sidebar-bottom .auth-button.signed-in { padding-inline: 8px; }
 .restored-chat .legacy-chat-main { min-width: 0; height: 100%; min-height: 0; display: flex; flex-direction: column; overflow: hidden; border: 0; border-radius: 0; background: #fff; }
 .restored-chat .legacy-chat-header { min-height: 72px; padding: 13px clamp(14px, 2vw, 28px); display: flex; align-items: center; gap: 12px; border-bottom: 1px solid rgba(43, 83, 175, .1); background: rgba(255, 255, 255, .96); }
-.restored-chat .legacy-header-title h3 { color: var(--ink); font-size: 1.02rem; }
-.restored-chat .legacy-header-title p { margin-top: 3px; color: #7a88a7; font-size: .72rem; }
+.restored-chat .legacy-header-title h1 { margin: 0; color: var(--ink); font-size: 1.02rem; line-height: 1.3; }
+.restored-chat .legacy-header-title p { margin-top: 3px; color: #52617a; font-size: .72rem; }
 .chat-mobile-menu { display: none; place-items: center; width: 38px; height: 38px; flex: 0 0 auto; color: #52658d; border: 1px solid var(--line); border-radius: 11px; background: white; cursor: pointer; }
 .chat-header-actions { margin-left: auto; display: flex; align-items: center; gap: 10px; }
 .restored-chat .legacy-mode-badge { white-space: nowrap; }
@@ -1411,7 +1412,7 @@ html[data-motion='reduced'] .footer-contact-links a { transition: none; }
   .restored-chat .legacy-chat-main { width: 100%; height: 100dvh; }
   .chat-mobile-menu { display: grid; }
   .restored-chat .legacy-chat-header { min-height: 64px; padding: 10px 12px; gap: 8px; }
-  .restored-chat .legacy-header-title h3 { font-size: .88rem; }
+  .restored-chat .legacy-header-title h1 { font-size: .88rem; }
   .restored-chat .legacy-header-title p { max-width: 180px; font-size: .64rem; }
   .chat-header-actions { gap: 6px; }
   .restored-chat .legacy-mode-badge { padding: 5px 7px; font-size: .62rem; }
@@ -1573,6 +1574,7 @@ html[data-motion='reduced'] .deskbot-panel, html[data-motion='reduced'] .deskbot
 :root[data-theme='dark'] .legacy-chat-main { background: var(--surface); border-color: var(--line); }
 :root[data-theme='dark'] textarea,
 :root[data-theme='dark'] .auth-card input { color: var(--ink); background: transparent; }
+:root[data-theme='dark'] #homepage-prompt::placeholder { color: var(--muted); opacity: 1; }
 :root[data-theme='dark'] .mode-card,
 :root[data-theme='dark'] .mode-card-icon,
 :root[data-theme='dark'] .empty-symbol,
@@ -1691,6 +1693,14 @@ html[data-motion='reduced'] .deskbot-panel, html[data-motion='reduced'] .deskbot
   .restored-chat .chat-header-actions { min-width: 0; }
   .restored-chat .chat-header-actions > * { flex: 0 0 auto; }
   .restored-chat .legacy-header-title { min-width: 0; }
-  .restored-chat .legacy-header-title h3,
+  .restored-chat .legacy-header-title h1,
   .restored-chat .legacy-header-title p { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 }
+
+/* Accessibility matrix contrast fixes: supporting text remains readable in both themes. */
+.legacy-composer-hint { color: #53627c; }
+:root[data-theme='dark'] .legacy-composer-hint,
+:root[data-theme='dark'] .restored-chat .legacy-mode-btn small { color: var(--muted); }
+:root[data-theme='dark'] .restored-chat .legacy-support-link { color: #174bc3; background: #e5efff; }
+:root[data-theme='dark'] .chat-privacy-note { color: var(--muted); }
+:root[data-theme='dark'] .chat-privacy-note a { color: #8fb0ff; }
