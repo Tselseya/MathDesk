@@ -2,6 +2,9 @@ import { createClient } from 'npm:@supabase/supabase-js@2';
 
 const PROD_ORIGIN = 'https://app.mathdesk.page.gd';
 const ALLOWED_ORIGINS = new Set([PROD_ORIGIN, 'http://localhost:5173', 'http://127.0.0.1:5173']);
+// Cloudflare Pages previews for MathDesk are scoped to this project hostname.
+// Do not broaden this to *.pages.dev or reflect arbitrary request origins.
+const CLOUDFLARE_PREVIEW_ORIGIN = /^https:\/\/[a-z0-9-]+\.mathdesk-6bt\.pages\.dev$/;
 const ALLOWED_MODES = new Set(['solve', 'learn', 'practice', 'deskbot']);
 const ALLOWED_MIME = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 const MAX_MESSAGE_CHARS = 4000;
@@ -14,8 +17,12 @@ const DEFAULT_MODEL = 'qwen/qwen3.8-27b';
 type MathDeskImage = { mimeType: string; data: string };
 type MathDeskRequest = { message: string; mode: string; images?: MathDeskImage[]; hasImages?: boolean };
 
+function isAllowedOrigin(origin: string | null) {
+  return Boolean(origin && (ALLOWED_ORIGINS.has(origin) || CLOUDFLARE_PREVIEW_ORIGIN.test(origin)));
+}
+
 function corsHeaders(origin: string | null) {
-  const allowed = origin && ALLOWED_ORIGINS.has(origin) ? origin : PROD_ORIGIN;
+  const allowed = isAllowedOrigin(origin) ? origin! : PROD_ORIGIN;
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Headers': 'authorization, apikey, content-type, x-client-info',
